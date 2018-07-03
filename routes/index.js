@@ -27,7 +27,7 @@ router.use('/market', marketRouter);
 //홈
 router.use('/home', homeRouter);
 //나만의 냉장고
-router.use('/fridge', fridgeRouter);
+router.use('/', fridgeRouter);
 
 
 module.exports = router;

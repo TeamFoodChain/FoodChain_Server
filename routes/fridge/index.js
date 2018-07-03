@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-const registerRouter = require('./register');
+const fridgeRouter = require('./fridge');
 const cameraRouter = require('./camera');
 
 
 router.get('/', (req, res, next) => {
-  res.render('index', { title: 'fridge' });
+  res.render('index', { title: 'fridge/index' });
 });
 
-router.use('/register', registerRouter);
-router.use('/camera', cameraRouter);
+router.use('/fridge', fridgeRouter);
+router.use('/fridge/camera', cameraRouter);
 
 
 module.exports = router;
