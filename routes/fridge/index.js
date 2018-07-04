@@ -1,15 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-const fridgeRouter = require('./fridge');
+const manageRouter = require('./manage/index');
+const storeRouter = require('./store/index');
 const cameraRouter = require('./camera');
 
 
 router.get('/', (req, res, next) => {
-  res.render('index', { title: 'fridge/index' });
+  res.render('index', { title: 'fridge' });
 });
 
-router.use('/fridge', fridgeRouter);
+router.use('/manage', manageRouter);
+router.use('/manage', storeRouter);
 router.use('/fridge/camera', cameraRouter);
 
 

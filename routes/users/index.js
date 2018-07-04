@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const signupRouter = require('./signup');
+const signupRouter = require('./signup/index');
 const signinRouter = require('./signin');
 const locateRouter = require('./locate');
 const choiceRouter = require('./choice/index');
