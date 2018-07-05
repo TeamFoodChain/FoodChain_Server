@@ -39,6 +39,7 @@ router.post('/', upload.array('image'), (req, res) => {
 	let phone = decoded.phone;
 
 
+	let sup_idx; //sup_idx get
 
 	let pro_name = req.body.pro_name;
 	let pro_cate = req.body.pro_cate;
@@ -82,7 +83,7 @@ router.post('/', upload.array('image'), (req, res) => {
 		},
 		// 2. token과 비교하기 위해 supplier table에서 email, phone number를 가져옴
 		function(connection, callback){
-			let getUserDataQuery = "SELECT sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
+			let getUserDataQuery = "SELECT sup_idx, sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
 			connection.query(getUserDataQuery, token, function(err, result){
 				if(err) {
 					res.status(500).send({
@@ -93,6 +94,7 @@ router.post('/', upload.array('image'), (req, res) => {
 				} else {
 					if(email === result[0].sup_email && phone === result[0].sup_phone){
 						console.log("success to verify");
+						sup_idx = result[0].sup_idx;
 					} else {
 						res.status(400).send({
 							message : "Invalid token error"
@@ -134,22 +136,45 @@ router.post('/', upload.array('image'), (req, res) => {
 		},
 
 		// 4. image는 테이블이 따로 있으므로 3에서 구한 pro_idx값을 이용해서 따로 저장해 준다.
-
 		function(connection, result, callback){
 			let insertProductImageQuery = "INSERT INTO product_image (pro_idx, pro_img) VALUES(?, ?)";
-
 			for(let i = 0 ; i < pro_image.length ; i++){
 				connection.query(insertProductImageQuery, [result.pro_idx, pro_image[i]], function(err, result){
 					if(err) {
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
 						callback("connection.query Error : " + err);
 					}
 				});
-			}
 
-			res.status(200).send({
-				message : "Success to register product"
+			}
+			console.log(result);
+			// res.status(200).send({
+			// 	message : "Success to register product"
+			// });
+			callback(null, connection, result);
+			// callback(null, "Success to register product");
+		},
+		// 5. sell_list에 추가해 준다.
+		function(connection, result, callback){
+			let insertSell_ListImageQuery = "INSERT INTO sell_list (sup_idx, pro_idx) VALUES(?, ?)";
+
+		console.log("dd");
+			connection.query(insertSell_ListImageQuery, [sup_idx, result.pro_idx], function(err, result){
+				if(err) {
+					res.status(500).send({
+						message : "Internal Server Error"
+					});
+					callback("connection.query Error : " + err);
+				}  else{
+					res.status(200).send({
+						message : "Success to register product"
+					});
+					callback(null, "Success to register product");
+				}
+				connection.release();
 			});
-			callback(null, "Success to register product");
 		}
 		];
 		async.waterfall(taskArray, function(err, result){
