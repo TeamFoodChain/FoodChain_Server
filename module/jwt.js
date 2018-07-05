@@ -4,14 +4,14 @@ const secretKey = require('../config/secretKey.js').secret;
 
 
 module.exports = {
-  sign : function(email, phone) {
+  sign : function(email, phone, identify) {
     const options = {
-      algorithm : "HS256",
-      expiresIn : 60 * 60 * 24 * 30 //30 days
+      algorithm : "HS256"
     };
     const payload = {
       email : email,
-      phone : phone
+      phone : phone,
+      identify : identify 
     };
     let token = jwt.sign(payload, secretKey, options);
     return token;
