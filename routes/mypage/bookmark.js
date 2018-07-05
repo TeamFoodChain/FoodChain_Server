@@ -3,13 +3,14 @@ const router = express.Router();
 const async = require('async');
 const upload = require('../../config/s3multer.js');
 const pool = require('../../config/dbPool.js');
+const pool_async = require('../../config/dbPool_async.js');
 const jwt = require('../../module/jwt.js');
 
 
 router.get('/', (req, res) => {
-	var bookmark_info = new Array();
-	var product = {};
-	var product_image = new Array();
+	let bookmark_info = [];
+	let product = {};
+	let product_image = [];
 
 	let token = req.headers.token;
 	let decoded = jwt.verify(token);
@@ -41,6 +42,7 @@ router.get('/', (req, res) => {
 		// 2. token과 비교하기 위해 supplier table에서 idx, email, phone number를 가져옴
 		function(connection, callback){
 			let getUserDataQuery = "SELECT sup_idx, sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
+			
 			connection.query(getUserDataQuery, token, function(err, result){
 				if(err) {
 					res.status(500).send({
@@ -73,65 +75,104 @@ router.get('/', (req, res) => {
 					});
 					callback("connection.query Error : " + err);
 				}
-				callback(null, connection, result); 
+				callback(null, result);
+				connection.release(); 
 			});
 		},
 		// 4. 받아온 pro_idx로 북마크 정보를 조회한다.
-		function(connection, pro_idx, callback){
-			let getBookmarkProductQuery = '';
-			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
+		function(pro_idx, callback){
+			let getBookmarkProductQuery = "SELECT * FROM product NATURAL JOIN market WHERE pro_idx = ?";
 
+			(async function(){
+				let connections = await pool_async.getConnection();
 
-			for(let i = 0 ; i < pro_idx.length ; i++){
-				getBookmarkProductQuery += "SELECT * FROM product NATURAL JOIN market NATURAL JOIN product_image WHERE pro_idx = " + pro_idx[i].pro_idx + ";";
-			}
-			console.log(getBookmarkProductQuery);
+				let reserve = function(cb){
+					process.nextTick(function(){
+						cb(pro_idx);
+					});
+				}
 
-
-				connection.query(getBookmarkProductQuery, function(err, result){
-						console.log("Asdasdasd" +result);
-					if(err) {
-						res.status(500).send({
-							message : "Internal Server Error"
-						});
-						callback("connection.query Error : " + err);
-					} else{
-						console.log("Asdasdasd" +result);
-						product.pro_idx = result[0].pro_idx;
-						product.pro_name = result[0].pro_name;
-						product.pro_price = result[0].pro_price;
-						product.pro_sale_price = result[0].pro_sale_price;
-						product.pro_info = result[0].pro_info;
+				let makeReserve = function(i, pro_idx){
+					reserve(async function(pro_idx){
+						let value = pro_idx[i];
+						console.log(value);
+						console.log(value.pro_idx);
+						let result = await pool_async.query(getBookmarkProductQuery, value.pro_idx);
+						let data = result[0];
+						product = {};
+						product.pro_idx = data[0].pro_idx;
+						product.pro_name = data[0].pro_name;
+						product.pro_price = data[0].pro_price;
+						product.pro_sale_price = data[0].pro_sale_price;
+						product.pro_info = data[0].pro_info;
 						bookmark_info[i] = {};
 						bookmark_info[i].product = product;
 
-						//여기서 구글 api와 market의 주소, 위치 값을 이용해서 거리를 알려준다.
+						if(i + 1 == pro_idx.length){
+						end();
+						connections.release();
 					}
-
 				});
-				connection.query(getProductImageQuery, [pro_idx[i].pro_idx], function(err, result){
-					if(err) {
-						res.status(500).send({
-							message : "Internal Server Error"
-						});
-						callback("connection.query Error : " + err);
-					} else{
-						if(result != 0){
-						for(let j = 0 ; j < result.length ; j++){
-							product_image[j] = result[j].pro_img;
-						}
+				}
+
+				for(var i = 0 ; i < pro_idx.length ; i++){
+					makeReserve(i, pro_idx);
+				}
+
+				let end = function(){
+					callback(null, pro_idx);
+				}
+			})();
+
+		},
+
+		function(pro_idx, callback){
+			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
+
+				(async function(){
+				let connections = await pool_async.getConnection();
+
+				let reserve = function(cb){
+					process.nextTick(function(){
+						cb(pro_idx);
+					});
+				}
+
+				let makeReserve = function(i, pro_idx){
+					reserve(async function(pro_idx){
+						let value = pro_idx[i];
+						let result = await pool_async.query(getProductImageQuery, value.pro_idx);
+						let data = result[i];
+						console.log(data);
+						if(data.length != 0){
+							product_image = [];
+							for(let j = 0 ; j < data.length ; j++){
+								product_image[j] = data[j].pro_img;
+							}
 							bookmark_info[i].product.pro_img = product_image.slice(0);
 						}
+
+						if(i + 1 == pro_idx.length){
+						end();
+						connections.release();
 					}
 				});
+				}
+
+				for(var i = 0 ; i < pro_idx.length ; i++){
+					makeReserve(i, pro_idx);
+				}
+
+				let end = function(){
+					res.status(200).send({
+						message : "Success to load",
+						data : bookmark_info
+					});
+					callback(null, "Success to load");
+				}
+			})();
 
 
-			// res.status(200).send({
-			// 	message : "Success to load",
-			// 	data : bookmark_info
-			// });
-			//callback(null, "Success to load");
-			connection.release();
 		}
 		];
 
@@ -139,8 +180,6 @@ router.get('/', (req, res) => {
 		if(err){
 			console.log(err);
 		} else {
-
-			console.log(bookmark_info);
 			console.log(result);
 		}
 	});
