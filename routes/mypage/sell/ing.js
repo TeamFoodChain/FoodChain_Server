@@ -9,7 +9,7 @@ const moment = require('moment');
 const upload = require('../../../config/s3multer.js');
 
 router.get('/', (req, res) => {
-	let bookmark_info = [];
+	let saleProduct_info = [];
 	let product = {};
 	let product_image = [];
 
@@ -72,8 +72,8 @@ router.get('/', (req, res) => {
 		},
 		// 3. token 값이 옳으면, pro_idx를 가져온다.
 		function(connection, callback){
-			let getSupBookmarkIdxQuery = "SELECT pro_idx FROM sell_list WHERE sup_idx = ?";
-			connection.query(getSupBookmarkIdxQuery, [sup_idx], function(err, result){
+			let getSupIdxQuery = "SELECT pro_idx FROM sell_list WHERE sup_idx = ?";
+			connection.query(getSupIdxQuery, [sup_idx], function(err, result){
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
@@ -86,7 +86,7 @@ router.get('/', (req, res) => {
 		},
 
 		// 4. pro_idx와 sup_idx를 가지고 판매 상품을 가져온다.
-		function(	pro_idx, callback){
+		function(pro_idx, callback){
 			let getProductDataQuery = "SELECT * FROM product WHERE pro_idx = ?";
 
 			(async function(){
@@ -101,8 +101,6 @@ router.get('/', (req, res) => {
 				let makeReserve = function(i, pro_idx){
 					reserve(async function(pro_idx){
 						let value = pro_idx[i];
-						console.log(value);
-						console.log(value.pro_idx);
 						let result = await pool_async.query(getProductDataQuery, value.pro_idx);
 						let data = result[0];
 						product = {};
@@ -111,8 +109,8 @@ router.get('/', (req, res) => {
 						product.pro_price = data[0].pro_price;
 						product.pro_sale_price = data[0].pro_sale_price;
 						product.pro_info = data[0].pro_info;
-						bookmark_info[i] = {};
-						bookmark_info[i].product = product;
+						saleProduct_info[i] = {};
+						saleProduct_info[i].product = product;
 
 						if(i + 1 == pro_idx.length){
 						end();
@@ -120,7 +118,11 @@ router.get('/', (req, res) => {
 					}
 				});
 				}
-
+				// pro_idx 가 없으면 (상품이 없을 경우) 다음 단계 진행
+				if(pro_idx.length == 0){
+					callback(null, pro_idx);
+				}
+				
 				for(var i = 0 ; i < pro_idx.length ; i++){
 					makeReserve(i, pro_idx);
 				}
@@ -148,13 +150,12 @@ router.get('/', (req, res) => {
 						let value = pro_idx[i];
 						let result = await pool_async.query(getProductImageQuery, value.pro_idx);
 						let data = result[i];
-						console.log(data);
 						if(data.length != 0){
 							product_image = [];
 							for(let j = 0 ; j < data.length ; j++){
 								product_image[j] = data[j].pro_img;
 							}
-							bookmark_info[i].product.pro_img = product_image.slice(0);
+							saleProduct_info[i].product.pro_img = product_image.slice(0);
 						}
 
 						if(i + 1 == pro_idx.length){
@@ -163,28 +164,32 @@ router.get('/', (req, res) => {
 					}
 				});
 				}
+				//pro_idx가 없을 경우(상품이 없을 경우) 다음 단계 진행 (끝)
+				if(pro_idx.length == 0){
+					callback(null, pro_idx);
+				}
 
 				for(var i = 0 ; i < pro_idx.length ; i++){
 					makeReserve(i, pro_idx);
 				}
 
 				let end = function(){
-					res.status(200).send({
-						message : "Success to load",
-						data : bookmark_info
-					});
 					callback(null, "Success to load");
 				}
 			})();
 
 
 		}
-	]
+	];
 
 	async.waterfall(taskArray, function(err, result){
 			if(err){
 				console.log(err);
 			} else {
+				res.status(200).send({
+						message : "Success to load",
+						data : saleProduct_info
+					});
 				console.log(result);
 			}
 		});
