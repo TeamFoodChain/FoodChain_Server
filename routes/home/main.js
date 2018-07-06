@@ -7,6 +7,7 @@ const pool_async = require('../../config/dbPool_async.js');
 const secretKey = require('../../config/secretKey.js').secret;
 
 //추천 상품, 쿠폰 홍보 배너, 최신상품(동네 위치 기준 20개)
+//추천상품, 쿠폰 홍보 배너 아직 보류 구현 남음
 
 
 router.get('/', (req, res) =>{
@@ -161,6 +162,7 @@ router.get('/', (req, res) =>{
 						product.pro_ex_date = data[0].pro_ex_date;
 						product.pro_regist_date = data[0].pro_regist_date;
 						product.pro_info = data[0].pro_info;
+						product.mar_idx = mar_idx[i];
 						saleProduct_info[i] = {};
 						saleProduct_info[i].product = product;
 
