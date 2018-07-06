@@ -13,6 +13,7 @@ router.get('/', (req, res) => {
 	let sup_others = []; // 공급자의 다른 상품 정보들을 담는 배열 
 	let othersData = {}; // 다른 상품 정보를 담을 객체
 
+	// 디폴트 데이터
 	product_info.pro_idx = {}
 	product_info.pro_name = {};
 	product_info.pro_ex_date = {};

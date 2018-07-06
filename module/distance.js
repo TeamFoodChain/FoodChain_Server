@@ -10,8 +10,7 @@ module.exports = {
       var d = R * c;
       return d;
     }
-    Number.prototype.toRad = function() {
+  }
+   Number.prototype.toRad = function() {
       return this * Math.PI / 180;
     }
-
-  }

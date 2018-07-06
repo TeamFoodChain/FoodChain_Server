@@ -122,7 +122,7 @@ router.get('/', (req, res) => {
 				if(pro_idx.length == 0){
 					callback(null, pro_idx);
 				}
-				
+
 				for(var i = 0 ; i < pro_idx.length ; i++){
 					makeReserve(i, pro_idx);
 				}
@@ -132,7 +132,7 @@ router.get('/', (req, res) => {
 				}
 			})();
 		},
-
+		// 5. 상품 image 가져오기
 		function(pro_idx, callback){
 			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
 
