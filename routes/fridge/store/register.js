@@ -17,6 +17,8 @@ const moment = require('moment');
 const upload = require('../../../config/s3multer.js');
 
 router.get('/', (req, res, next) => {
+	let a = jwt.sign("leesd556@gmail.com", "01021121891", 0);
+	console.log(a);
 	res.render('index', { title: 'fridge/store/register'});
 	console.log(req.url);
 });

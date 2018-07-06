@@ -101,6 +101,12 @@ router.get('/', (req, res) => {
 		function(connection, data, callback){
 			let getMarketQuery = "SELECT * FROM market";
 			connection.query(getMarketQuery, function(err, result){
+				if(result.length == 0){ // 해당 토큰이 없다 
+					connection.release();
+					callback("Invalied User");
+					return;
+				}
+
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
