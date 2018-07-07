@@ -20,9 +20,11 @@ router.post('/',async(req,res)=>{
         message:"fail from client"
       }
     );
-  }else if(user_pw == user_pw_check) {
+  }else if(user_pw === user_pw_check) {
     let checkQuery = 'SELECT * FROM user WHERE user_email =?';
     let checkResult = await db.queryParam_Arr(checkQuery,[user_email]);
+    let checkPhoneQuery = 'SELECT * FROM user WHERE user_phone =?';
+    let checkPhoneResult = await db.queryParam_Arr(checkPhoneQuery,[user_phone]);
 
     if(!checkResult){
       res.status(500).send({
@@ -30,7 +32,11 @@ router.post('/',async(req,res)=>{
       });
     }else if(checkResult.length === 1){
       res.status(400).send({
-        message:"fail sign up from client, Already exists."
+        message:"fail sign up from client, Already exists. - same user_email"
+      });
+    }else if(checkPhoneResult.length === 1){
+      res.status(400).send({
+        message:"fail sign up from client, Already exists. - same user_phone"
       });
     }else{
       const salt = await crypto.randomBytes(32);

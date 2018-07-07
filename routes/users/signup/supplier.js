@@ -27,8 +27,12 @@ router.post('/',async(req,res)=>{
       }
     );
   }else if(sup_pw === sup_pw_check) {
-    let checkQuery = 'SELECT * FROM supplier WHERE sup_regist_num =?';
+    let checkQuery = 'SELECT * FROM supplier WHERE sup_regist_num = ?';
     let checkResult = await db.queryParam_Arr(checkQuery,[sup_regist_num]);
+    let checkEmailQuery = 'SELECT * FROM supplier WHERE sup_email = ?';
+    let checkEmailResult = await db.queryParam_Arr(checkEmailQuery,[sup_email]);
+    let checkPhoneQuery = 'SELECT * FROM supplier WHERE sup_phone = ?';
+    let checkPhoneResult = await db.queryParam_Arr(checkPhoneQuery,[sup_phone]);
 
     if(!checkResult){
       res.status(500).send({
@@ -36,7 +40,15 @@ router.post('/',async(req,res)=>{
       });
     }else if(checkResult.length === 1){
       res.status(400).send({
-        message:"fail sign up from client, Already exists."
+        message:"fail sign up from client, Already exists. - same sup_regist_num"
+      });
+    }else if(checkEmailResult.length === 1){
+      res.status(400).send({
+        message:"fail sign up from client, Already exists. - same sup_email"
+      });
+    }else if(checkPhoneResult.length === 1){
+      res.status(400).send({
+        message:"fail sign up from client, Already exists. - same sup_phone"
       });
     }else{
         let insertMarketQuery = 'INSERT INTO market (mar_name,mar_locate_lat,mar_locate_long,mar_addr) VALUES (?,?,?,?)';
