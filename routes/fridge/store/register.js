@@ -51,6 +51,7 @@ router.post('/', upload.array('image'), (req, res) => {
 	let pro_sale_price = req.body.pro_sale_price;
 	let pro_origin = req.body.pro_origin;
 	let mar_idx = req.body.mar_idx;
+	let pro_istimesale = req.body.pro_istimesale;
 	let pro_image = [];
 
 	let pro_regist_date = moment().format("YYYY-MM-DD HH:mm:ss");
@@ -111,8 +112,8 @@ router.post('/', upload.array('image'), (req, res) => {
 		// 3. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
 		function(connection, callback){
 			let getProductIdxQuery = "SELECT pro_idx FROM product WHERE pro_cate = ? AND pro_name = ? AND pro_price = ? AND pro_sale_price = ? AND pro_ex_date = ? AND pro_regist_date = ? AND pro_info = ? AND mar_idx = ? AND pro_origin = ?";
-			let insertProductQuery = "INSERT INTO product (pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-			connection.query(insertProductQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin], function(err, result){
+			let insertProductQuery = "INSERT INTO product (pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin, pro_istimesale) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			connection.query(insertProductQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin, pro_istimesale], function(err, result){
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"

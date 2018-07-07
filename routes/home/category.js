@@ -156,10 +156,10 @@ router.get('/', (req, res) => {
 
 			callback(null, connection);
 		}, 
-		// 4. 반경 안에 있는, 거리 순으로 정렬된 마켓에 있는 상품들을 가져온다.
+		// 4. 반경 안에 있는, 거리 순으로 정렬된 마켓에 있는 상품들을 가져온다. (팔린 상품, timesale 상품 제외)
 		function(connection, callback){
 			let dd = [];
-			let getProuctFromMarketQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_cate LIKE" + "'%" + pro_cate + "%'";
+			let getProuctFromMarketQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 AND pro_istimesale = 0 pro_cate LIKE" + "'%" + pro_cate + "%'";
 			let cnt = 0;
 
 			(async function(){

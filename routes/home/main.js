@@ -142,9 +142,9 @@ router.get('/', (req, res) =>{
 			});
 		},
 
-		// 4. 마켓 index를 가지고 product search, 등록 순
+		// 4. 마켓 index를 가지고 product search, 등록 순 (팔린 상품, timesale 상품 제외)
 		function(callback){
-			let getProductDataQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 ORDER BY pro_regist_date DESC";
+			let getProductDataQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 AND pro_istimesale = 0 ORDER BY pro_regist_date DESC";
 			let cnt = 0; // null인 값을 피하기 위해 cnt로 count한다.
 			console.log(mar_idx);
 			(async function(){
@@ -266,8 +266,8 @@ router.get('/', (req, res) =>{
 			let cnt = 0;
 			let getInterestQuery = ""; // 사용자의 관심 카테고리를 가져옴
 
-			// 관심 카테고리인 상품들이 있는 상품과 마켓정보
-			let getRecoQuery ="SELECT pro_idx, pro_name, pro_price, pro_sale_price, mar_addr, mar_locate_lat, mar_locate_long FROM market NATURAL JOIN product WHERE pro_cate = ? AND mar_idx IN (SELECT mar_idx FROM product WHERE pro_cate = ?)";
+			// 관심 카테고리인 상품들이 있는 상품과 마켓정보 (팔린 상품, timesale 상품 제외)
+			let getRecoQuery ="SELECT pro_idx, pro_name, pro_price, pro_sale_price, mar_addr, mar_locate_lat, mar_locate_long FROM market NATURAL JOIN product WHERE pro_cate = ? AND pro_issell AND pro_istimesale = 0 AND mar_idx IN (SELECT mar_idx FROM product WHERE pro_cate = ?)";
 
 			if(identify == 0)
 				getInterestQuery = "SELECT interest FROM interest WHERE user_idx = ?";
