@@ -30,10 +30,10 @@ router.post('/', async (req, res, next) => {
                 })
             }else{
                 let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
-                let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
+                let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.email]); 
                 let user_idx = select_idxResult[0].user_idx;
                 let insertQuery = "INSERT INTO basket WHERE (user_idx,pro_idx) VALUES (?,?)";
-                let insertResult = await db.queryParamArr(insertQuery,[user_idx, pro_idx]);
+                let insertResult = await db.queryParam_Arr(insertQuery,[user_idx, pro_idx]);
                 
                 if(!insertQuery){
                     res.status(500).send({
@@ -68,10 +68,10 @@ router.get('/',async (req,res,next)=> {
         
           }else{
             let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
-            let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
+            let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.email]); 
             let user_idx = select_idxResult[0].user_idx;
             let selectQuery = "SELECT * FROM  basket WHERE user_idx =? ORDER BY basket_date DESC";  
-            let selectResult = await db.queryParamArr(selectQuery, [user_idx]);
+            let selectResult = await db.queryParam_Arr(selectQuery, [user_idx]);
             if(!selectResult){
                 res.status(500).send({
                     message : "Internal Server Error"
@@ -120,10 +120,10 @@ router.delete('/',async (req,res,next)=>{
                 })
             }else{
                 let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
-                let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
+                let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.email]); 
                 let user_idx = select_idxResult[0].user_idx;
                 let deleteQuery = "DELETE FROM basket WHERE user_idx =? AND pro_idx =?";
-                let deleteResult = await db.queryParamArr(deleteQuery, [user_idx, pro_idx]);
+                let deleteResult = await db.queryParam_Arr(deleteQuery, [user_idx, pro_idx]);
                 if(!deleteResult){
                      res.status(500).send({
                          message : "Internal server error"

@@ -21,11 +21,11 @@ router.post('/', async function(req, res, next) {
         }else {
             let user_interest = req.body.pro_cate;
             let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
-            let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
+            let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.email]); 
             let user_idx = select_idxResult[0].user_idx;
-            let insertQuery = "INSERT INTO interest (user_interest,user_idx) VALUES (?,?)";
+            let insertQuery = "INSERT INTO interest (interest,user_idx) VALUES (?,?)";
             for(let i = 0 ; i < user_interest.length; i++){
-                let insertResult = await db.queryParamArr(insertQuery, [user_interest[i],user_idx]);
+                let insertResult = await db.queryParam_Arr(insertQuery, [user_interest[i],user_idx]);
             }
             if(!insertQuery){
                 res.status (500).send({

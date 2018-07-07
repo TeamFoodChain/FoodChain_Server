@@ -209,7 +209,7 @@ router.get('/', (req, res) => {
 								product.pro_img = [];
 								product.dist = mar_idx_distance[i][1];
 								saleProduct_info[cnt] = {};
-								saleProduct_info[cnt].product = product;
+								saleProduct_info[cnt] = product;
 								//console.log(saleProduct_info[cnt]);
 								cnt++;
 							});
@@ -256,7 +256,7 @@ router.get('/', (req, res) => {
 				let makeReserve = function(i, pro_idx){
 					reserve(async function(pro_idx){
 						let value = pro_idx[i];
-						let result = await pool_async.query(getProductImageQuery, pro_idx[i].product.pro_idx);
+						let result = await pool_async.query(getProductImageQuery, pro_idx[i].pro_idx);
 						let data = result[0];
 
 						return new Promise((resolve, reject)=>{
@@ -267,13 +267,13 @@ router.get('/', (req, res) => {
 								product_image[j] = data[j].pro_img;
 							}
 							console.log("dddd : "+ product_image); // 여기가 callback 되고 나서, res.status가 찍히고 나서도 실행이 된다. 왜그럴까?
-							saleProduct_info[i].product.pro_img = product_image.slice(0);
+							saleProduct_info[i].pro_img = product_image.slice(0);
 						}
 						}).then(function(){
 							if(i + 1 == pro_idx.length){
 							saleProduct_info.sort(function(a, b){
-								console.log(a.product.dist);
-								if(a.product.dist === b.product.dist){
+								console.log(a.dist);
+								if(a.dist === b.dist){
 									return 0;
 								} else {
 									return a.dist - b.dist;

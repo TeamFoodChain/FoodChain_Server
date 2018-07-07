@@ -34,10 +34,10 @@ router.post('/', async function(req, res, next) {
             })
         }else {
             let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
-            let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
+            let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.email]); 
             let user_idx = select_idxResult[0].user_idx;
             let insertQuery = "INSERT INTO user WHERE (user_addr, user_addr_lat, user_addr_long) VALUES (?,?,?)";
-            let insertResult = await db.queryParamArr(insertQuery,[user_addr, user_addr_lat, user_addr_long]);
+            let insertResult = await db.queryParam_Arr(insertQuery,[user_addr, user_addr_lat, user_addr_long]);
             
             if(!insertQuery){
                 res.status(500).send({
