@@ -37,15 +37,24 @@ router.post('/',async(req, res) =>{
 	
 				if(hashedpw.toString('base64') === checkResult[0].user_pw){
 					token = jwt.sign(checkResult[0].user_email, checkResult[0].user_pw, 0);
-					res.status(201).send({
-						message : "success siggin",
-						token : token
-					});
+					insertQuery = 'UPDATE user SET user_token = ? WHERE user_idx = ?';
+					insertResult = await db.queryParam_Arr(insertQuery, [token, checkResult[0].user_idx]);
+					if (!insertResult) {
+						res.status(500).send({
+							message : "insert token fail",
+							token : token
+						});
+					}else{
+						res.status(201).send({
+							message : "success siggin",
+							token : token
+						});
+					}
 				}else{
 					console.log("hashedpw : " + hashedpw.toString('base64'));
 					console.log("user_pw : " + checkResult[0].user_pw);
 					res.status(400).send({
-						message:"fail signin from client, login failed 롸?"
+						message:"fail signin from client, login failed"
 					});
 				}
 			}else{
@@ -72,15 +81,24 @@ router.post('/',async(req, res) =>{
 	
 				if(hashedpw.toString('base64') === checkResult[0].sup_pw){
 					token = jwt.sign(checkResult[0].sup_email, checkResult[0].sup_pw, 0);
-					res.status(201).send({
-						message : "success siggin",
-						token : token
-					});
+					insertQuery = 'UPDATE supplier SET sup_token = ? WHERE sup_idx = ?';
+					insertResult = await db.queryParam_Arr(insertQuery, [token, checkResult[0].sup_idx]);
+					if (!insertResult) {
+						res.status(500).send({
+							message : "insert token fail",
+							token : token
+						});
+					}else{
+						res.status(201).send({
+							message : "success siggin",
+							token : token
+						});
+					}
 				}else{
 					console.log("hashedpw : " + hashedpw.toString('base64'));
 					console.log("user_pw : " + checkResult[0].sup_pw);
 					res.status(400).send({
-						message:"fail signin from client, login failed 이거??"
+						message:"fail signin from client, login failed"
 					});
 				}
 			}else{

@@ -11,9 +11,16 @@ router.post('/',async(req,res)=>{
   let user_phone = req.body.user_phone;
   let user_id = req.body.user_id;
 
+
   let insertQuery;
   let insertResult;
 
+  console.log(user_pw);
+  console.log(user_pw_check);
+  console.log(user_name);
+  console.log(user_email);
+  console.log(user_phone);
+  console.log(user_id);
   if(!user_pw || !user_pw_check || !user_name || !user_email || !user_phone){
     res.status(400).send(
       {

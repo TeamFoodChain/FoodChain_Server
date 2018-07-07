@@ -138,7 +138,7 @@ router.get('/', (req, res) =>{
 
 		// 4. 마켓 index를 가지고 product search, 등록 순
 		function(callback){
-			let getProductDataQuery = "SELECT * FROM product WHERE mar_idx = ? ORDER BY pro_regist_date DESC";
+			let getProductDataQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 ORDER BY pro_regist_date DESC";
 			let cnt = 0; // null인 값을 피하기 위해 cnt로 count한다.
 			console.log(mar_idx);
 			(async function(){
@@ -252,7 +252,7 @@ router.get('/', (req, res) =>{
 
 
 		}
-		]
+		];
 
 
     async.waterfall(taskArray, function(err, result){
