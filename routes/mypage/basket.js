@@ -23,30 +23,28 @@ router.post('/', async (req, res, next) => {
             })
         }else {
             let pro_idx = req.body.pro_idx;
-            let user_id =decoded.user_id;
 
-            if (!pro_idx){ 
+            if(!pro_idx){ 
                 res.status(400).send({      //데이터가 없는 경우      
                     message: "Null Value"
                 })
-            } else {
-            let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
-            let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
-            let user_idx = select_idxResult[0].user_idx;
-            let insertQuery = "INSERT INTO basket WHERE (user_idx,pro_idx) VALUES (?,?)";
-            let insertResult = await db.queryParamArr(insertQuery,[user_idx, pro_idx]);
-
-            if(!insertQuery){
-                res.status(500).send({
-                    message : "Internal Server Error"
-                });
             }else{
-                res.status(200).send({
-                    message: "Success to add"
-                });
+                let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
+                let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
+                let user_idx = select_idxResult[0].user_idx;
+                let insertQuery = "INSERT INTO basket WHERE (user_idx,pro_idx) VALUES (?,?)";
+                let insertResult = await db.queryParamArr(insertQuery,[user_idx, pro_idx]);
+                
+                if(!insertQuery){
+                    res.status(500).send({
+                        message : "Internal Server Error"
+                    });
+                }else{
+                    res.status(200).send({
+                        message: "Success to add"
+                    });
                 }
             }
-
         }
     }
 });
@@ -67,7 +65,8 @@ router.get('/',async (req,res,next)=> {
             res.status(500).send({
                 message: "Token Error"
             })
-        }else{
+        
+          }else{
             let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
             let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
             let user_idx = select_idxResult[0].user_idx;
@@ -92,7 +91,8 @@ router.get('/',async (req,res,next)=> {
             }
         }
     }
-    });
+
+});
 
 /*장바구니의 상품 삭제*/
 router.delete('/',async (req,res,next)=>{
@@ -105,36 +105,35 @@ router.delete('/',async (req,res,next)=>{
     }else{
         let decoded = jwt.verify(token);
         console.log(decoded);
+
         if ( decoded === -1) {
             res.status(500).send({
                 message: "Token Error"
             })
         }else {
             let pro_idx = req.body.pro_idx;
+            console.log(pro_idx);
+ 
             if(!pro_idx){
                 res.status(400).send({
                     message: "Null Value"
-                });
-            }return;
-            let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
-            let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
-            let user_idx = select_idxResult[0].user_idx;
-            let deleteQuery = "DELETE FROM basket WHERE user_idx =? AND pro_idx =?"
-            let deleteResult = await db.queryParamArr(deleteQuery, [decoded.user_idx, pro_idx]);
-            
-            if(!deleteResult){
-                res.status(500).send({
-                message : "Internal server error"
-            })
-        }else{
-            res.status.send(200)({
-                message : "Succsss to delete"
-            })
-        }
-    }
-    }
-});
-
-
-
+                })
+            }else{
+                let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?"
+                let select_idxResult = await db.queryParamArr(select_idxQuery,[decoded.email]); 
+                let user_idx = select_idxResult[0].user_idx;
+                let deleteQuery = "DELETE FROM basket WHERE user_idx =? AND pro_idx =?";
+                let deleteResult = await db.queryParamArr(deleteQuery, [user_idx, pro_idx]);
+                if(!deleteResult){
+                     res.status(500).send({
+                         message : "Internal server error"
+                        })
+                     }else{
+                         res.status(200).send({
+                             message : "Succsss to delete"
+                            })
+                        }
+                    }
+                }}
+            });
 module.exports = router;
