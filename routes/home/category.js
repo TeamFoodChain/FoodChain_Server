@@ -9,7 +9,6 @@ const secretKey = require('../../config/secretKey.js').secret;
 
 
 router.get('/', (req, res) => {
-	let pro_idx = req.query.pro_idx;
 	let pro_cate = req.query.pro_cate;
 
 	let saleProduct_info = [];
@@ -160,8 +159,9 @@ router.get('/', (req, res) => {
 		// 4. 반경 안에 있는, 거리 순으로 정렬된 마켓에 있는 상품들을 가져온다.
 		function(connection, callback){
 			let dd = [];
-			let getProuctFromMarketQuery = "SELECT * FROM product WHERE mar_idx = ?";
+			let getProuctFromMarketQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_cate LIKE" + "'%" + pro_cate + "%'";
 			let cnt = 0;
+
 			(async function(){
 				let connections = await pool_async.getConnection();
 
