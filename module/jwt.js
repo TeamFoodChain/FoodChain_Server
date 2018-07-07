@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+<<<<<<< HEAD
 const secretKey = require('../config/secretKey.js').secret;
 
 module.exports = {
@@ -16,6 +17,25 @@ module.exports = {
     return token;
   }, // 토큰 생성
 
+=======
+
+const secretKey = require('../config/secretKey.js').secret;
+
+
+module.exports = {
+  sign : function(email, phone, identify) {
+    const options = {
+      algorithm : "HS256"
+    };
+    const payload = {
+      email : email,
+      phone : phone,
+      identify : identify 
+    };
+    let token = jwt.sign(payload, secretKey, options);
+    return token;
+  },
+>>>>>>> dev
   verify : function(token) {
     let decoded;
     try {

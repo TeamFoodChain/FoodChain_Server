@@ -11,7 +11,7 @@ router.get('/', (req, res, next) => {
 });
 
 router.use('/manage', manageRouter);
-router.use('/manage', storeRouter);
+router.use('/store', storeRouter);
 router.use('/fridge/camera', cameraRouter);
 
 
