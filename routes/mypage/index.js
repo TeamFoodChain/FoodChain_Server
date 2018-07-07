@@ -4,6 +4,7 @@ const router = express.Router();
 const bookmarkRouter = require('./bookmark');
 const basketRouter = require('./basket');
 const commentRouter = require('./comment');
+const sellRouter = require('./sell/index');
 
 router.get('/', (req, res, next) => {
   res.render('index', { title: 'mypage' });
@@ -12,6 +13,7 @@ router.get('/', (req, res, next) => {
 router.use('/bookmark', bookmarkRouter);
 router.use('/basket', basketRouter);
 router.use('/comment', commentRouter);
+router.use('/sell', sellRouter);
 
 
 module.exports = router;
