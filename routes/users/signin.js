@@ -60,7 +60,7 @@ router.post('/',async(req, res) =>{
 				checkResult = await db.queryParam_Arr(checkQuery, [user_id]);
 			}else{
 				checkQuery = 'SELECT * FROM supplier WHERE sup_phone = ?';
-				checkResult = await db.queryParam_Arr(checkPhoneQuery, [user_id]);
+				checkResult = await db.queryParam_Arr(checkQuery, [user_id]);
 			}
 
 			if (!checkResult) {												
