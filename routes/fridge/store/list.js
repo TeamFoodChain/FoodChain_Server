@@ -22,7 +22,7 @@ router.get('/', (req, res) => {
 	}
 
 	let email = decoded.email;
-	let phone = decoded.phone;
+	let pw = decoded.pw;
 	let identify = decoded.identify;
 
 	let taskArray = [
@@ -48,12 +48,14 @@ router.get('/', (req, res) => {
 				getIdentifiedDataQuery = "SELECT sup_idx, sup_addr, sup_addr_lat, sup_addr_long, sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
 			
 			connection.query(getIdentifiedDataQuery, token, function(err, result){
-				if(result.length == 0){ // 해당 토큰이 없다 
+				if(result.length == 0){ // 해당 토큰이 없다
+					res.status(500).send({
+						message : "Invalied User"
+					});
 					connection.release();
 					callback("Invalied User");
 					return;
 				}
-
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"

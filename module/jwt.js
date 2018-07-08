@@ -8,7 +8,7 @@ module.exports = {
     };
     const payload = {
       email : email,
-      phone : phone,
+      pw : pw,
       identify : identify 
     };
     let token = jwt.sign(payload, secretKey, options);

@@ -23,7 +23,8 @@ router.get('/', (req, res) => {
 	}
 
 	let email = decoded.email;
-	let phone = decoded.phone;
+	let pw = decoded.pw;
+	let identify = decoded.identify;
 
 	let taskArray = [
 		// 1. pool에서 connection 하나 가져오기
@@ -39,11 +40,24 @@ router.get('/', (req, res) => {
 				}
 			});
 		},
-		// 2. token과 비교하기 위해 supplier table에서 idx, email, phone number를 가져옴
+		// 2. token과 비교, 나중에 token에서 식별 데이터를 받아서 테이블 구분하자.
 		function(connection, callback){
-			let getUserDataQuery = "SELECT sup_idx, sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
+			let getIdentifiedDataQuery ="";
+			if(identify == 0) // user 일 때
+				getIdentifiedDataQuery = "SELECT user_addr, user_addr_lat, user_addr_long, user_email, user_phone FROM user WHERE user_token = ? "
+			else // supplier 일 때
+				getIdentifiedDataQuery = "SELECT sup_addr, sup_addr_lat, sup_addr_long, sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
 			
-			connection.query(getUserDataQuery, token, function(err, result){
+			connection.query(getIdentifiedDataQuery, token, function(err, result){
+				if(result.length == 0){ // 해당 토큰이 없다
+					res.status(500).send({
+						message : "Invalied User"
+					});
+					connection.release();
+					callback("Invalied User");
+					return;
+				}
+
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
@@ -51,6 +65,21 @@ router.get('/', (req, res) => {
 					connection.release();
 					callback("connection.query Error : " + err);
 				} else {
+					if(identify == 0){ // user 일 때 
+						console.log(result);
+						if(email === result[0].user_email && phone === result[0].user_phone){
+						console.log("success to verify");
+					} else {
+						res.status(400).send({
+							message : "Invalid token error"
+						});
+						connection.release();
+						callback("Invalid token error");
+						return;
+					}
+					}
+
+					else{ // supplier 일 때
 					if(email === result[0].sup_email && phone === result[0].sup_phone){
 						console.log("success to verify");
 					} else {
@@ -59,7 +88,10 @@ router.get('/', (req, res) => {
 						});
 						connection.release();
 						callback("Invalid token error");
+						return;
 					}
+				}
+
 					callback(null, connection, result[0].sup_idx);
 				}
 			});

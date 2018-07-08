@@ -34,7 +34,7 @@ router.get('/', async (req, res)=>{
             }else{
                 res.status(200).send({
                     message : "Success to get Data",
-                    pro_info : itemList
+                    data : itemList
                 });
             }
         }
