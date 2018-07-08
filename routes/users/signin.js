@@ -80,7 +80,9 @@ router.post('/',async(req, res) =>{
 				let hashedpw = await crypto.pbkdf2(user_pw,checkResult[0].sup_pw_salt, 100000,32,'sha512');
 	
 				if(hashedpw.toString('base64') === checkResult[0].sup_pw){
-					token = jwt.sign(checkResult[0].sup_email, checkResult[0].sup_pw, 0);
+					console.log(identify);
+					token = jwt.sign(checkResult[0].sup_email, checkResult[0].sup_pw, 1);
+					console.log(token);
 					insertQuery = 'UPDATE supplier SET sup_token = ? WHERE sup_idx = ?';
 					insertResult = await db.queryParam_Arr(insertQuery, [token, checkResult[0].sup_idx]);
 					if (!insertResult) {

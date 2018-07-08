@@ -27,7 +27,7 @@ router.get('/', (req, res) => {
 	}
 
 	let email = decoded.email;
-	let phone = decoded.phone;
+	let pw = decoded.pw;
 	let identify = decoded.identify;
 
 	let taskArray = [

@@ -6,6 +6,7 @@ const async = require('async');
 const pool = require('../../config/dbPool.js');
 const pool_async = require('../../config/dbPool_async.js');
 const secretKey = require('../../config/secretKey.js').secret;
+const identifier = require('../../module/token_identifier.js');
 
 
 router.get('/', (req, res) => {
@@ -15,27 +16,31 @@ router.get('/', (req, res) => {
 	let product = {};
 	let product_image = [];
 
-	let identify_data = {}; // user, supplier 식별 후 담을 데이터
 	let market = []; // 반경 내의 마켓 정보
 	let mar_idx_distance = []; // market을 이용해 반경 내에서 거리순으로 재배열
 
     let token = req.headers.token;
-	let decoded = jwt.verify(token);
-
-	// token verify
-	if (decoded == -1) {
-		res.status(500).send({
-			message : "token err"
-		});
-	}
-
-	let email = decoded.email;
-	let pw = decoded.pw;
-	let identify = decoded.identify;
-
+	
 	let taskArray = [
-		// 1. pool에서 connection 하나 가져오기
-		function(callback) {
+		// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
+		function(callback){
+			return new Promise((resolve, reject)=>{
+				identifier(token, function(err, result){
+					if(err) reject(err);
+					else resolve(result);
+				});
+			}).then(function(identify_data){
+				callback(null, identify_data);
+			}).catch(function(err){
+				res.status(500).send({
+					message : err
+				});
+				return ;
+				console.log(err);
+			});
+		},
+		// 2. pool에서 connection 하나 가져오기
+		function(identify_data, callback) {
 			pool.getConnection(function(err, connection) {
 				if (err) {
 					res.status(500).send({
@@ -43,77 +48,12 @@ router.get('/', (req, res) => {
 					}); 
 					callback("pool.getConnection Error : " + err);
 				} else {
-					callback(null, connection);
-				}
-			});
-		},
-	// 2. token과 비교, 나중에 token에서 식별 데이터를 받아서 테이블 구분하자.
-		function(connection, callback){
-			let getIdentifiedDataQuery ="";
-			if(identify == 0) // user 일 때
-				getIdentifiedDataQuery = "SELECT user_addr, user_addr_lat, user_addr_long, user_email, user_phone FROM user WHERE user_token = ? "
-			else // supplier 일 때
-				getIdentifiedDataQuery = "SELECT sup_addr, sup_addr_lat, sup_addr_long, sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
-			
-			connection.query(getIdentifiedDataQuery, token, function(err, result){
-				if(result.length == 0){ // 해당 토큰이 없다
-					res.status(500).send({
-						message : "Invalied User"
-					});
-					connection.release();
-					callback("Invalied User");
-					return;
-				}
-
-				if(err) {
-					res.status(500).send({
-						message : "Internal Server Error"
-					});
-					connection.release();
-					callback("connection.query Error : " + err);
-				} else {
-					if(identify == 0){ // user 일 때 
-						console.log(result);
-						if(email === result[0].user_email && phone === result[0].user_phone){
-						console.log("success to verify");
-					} else {
-						res.status(400).send({
-							message : "Invalid token error"
-						});
-						connection.release();
-						callback("Invalid token error");
-						return;
-					}
-					// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
-					identify_data.addr = result[0].user_addr;
-					identify_data.addr_lat = result[0].user_addr_lat;
-					identify_data.addr_long = result[0].user_addr_long;
-
-					}
-
-					else{ // supplier 일 때
-					if(email === result[0].sup_email && phone === result[0].sup_phone){
-						console.log("success to verify");
-					} else {
-						res.status(400).send({
-							message : "Invalid token error"
-						});
-						connection.release();
-						callback("Invalid token error");
-						return;
-					}
-					// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
-					identify_data.addr = result[0].sup_addr;
-					identify_data.addr_lat = result[0].sup_addr_lat;
-					identify_data.addr_long = result[0].sup_addr_long;
-				}
-
-					callback(null, connection);
+					callback(null, connection, identify_data);
 				}
 			});
 		},
 		// 3. 주변 마켓 정보 검색 쿼리 다시 생각할 것
-		function(connection, callback){
+		function(connection,identify_data, callback){
 			let getMarketQuery = "SELECT * FROM market";
 			connection.query(getMarketQuery, function(err, result){
 				if(result.length == 0){ // 해당 토큰이 없다 
@@ -134,13 +74,13 @@ router.get('/', (req, res) => {
 							market.push(result[i]);
 						}
 					}
-					callback(null, connection);
+					callback(null, connection, identify_data);
 				}
 			});
 		},
 
 		// 4. 반경(2km)안에 있는 market의 idx를 가지고, 거리 순으로 mar_idx를 정렬
-		function(connection, callback){ // data : identify_data
+		function(connection, identify_data, callback){ // data : identify_data
 			if(market.length == 0){ // 주변 마켓이 아무것도 없을 때 예외처리
 
 			}
@@ -162,7 +102,7 @@ router.get('/', (req, res) => {
 		// 4. 반경 안에 있는, 거리 순으로 정렬된 마켓에 있는 상품들을 가져온다. (팔린 상품, timesale 상품 제외)
 		function(connection, callback){
 			let dd = [];
-			let getProuctFromMarketQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 AND pro_istimesale = 0 pro_cate LIKE" + "'%" + pro_cate + "%'";
+			let getProuctFromMarketQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 AND pro_istimesale = 0 AND pro_cate LIKE" + "'%" + pro_cate + "%'";
 			let cnt = 0;
 
 			(async function(){

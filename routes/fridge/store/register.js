@@ -15,6 +15,7 @@ const pool_async = require('../../../config/dbPool_async.js');
 const secretKey = require('../../../config/secretKey.js').secret;
 const moment = require('moment');
 const upload = require('../../../config/s3multer.js');
+const identifier = require('../../../module/token_identifier.js');
 
 router.get('/', (req, res, next) => {
 	let a = jwt.sign("leesd556@gmail.com", "01021121891", 0);
@@ -26,22 +27,6 @@ router.get('/', (req, res, next) => {
 // 최대 이미지 개수 미설정
 router.post('/', upload.array('image'), (req, res) => {
 	let token = req.headers.token;
-	let decoded = jwt.verify(token);
-
-	console.log(decoded);
-
-	// token verify
-	if (decoded == -1) {
-		res.status(500).send({
-			message : "token err"
-		});
-	}
-
-	let email = decoded.email;
-	let pw = decoded.pw;
-	let identify = decoded.identify;
-
-	let sup_idx; //sup_idx get
 
 	let pro_name = req.body.pro_name;
 	let pro_cate = req.body.pro_cate;
@@ -50,7 +35,6 @@ router.post('/', upload.array('image'), (req, res) => {
 	let pro_price = req.body.pro_price;
 	let pro_sale_price = req.body.pro_sale_price;
 	let pro_origin = req.body.pro_origin;
-	let mar_idx = req.body.mar_idx;
 	let pro_istimesale = req.body.pro_istimesale;
 	let pro_deadline = req.body.pro_deadline;
 	let pro_image = [];
@@ -65,15 +49,33 @@ router.post('/', upload.array('image'), (req, res) => {
 	}	
 
 	// 상품의 카테고리, 이름, 유통기한의 값이 없는 경우
-	if(!pro_name || !pro_cate || !pro_ex_date || !pro_price || !pro_sale_price || !pro_origin){
+	if(!pro_name || !pro_cate || !pro_ex_date || !pro_price || !pro_sale_price || !pro_origin || !pro_istimesale || !pro_deadline){
 		res.status(400).send({
 			message : "Null Value"
 		});
+		return ;
 	}
 
 	let taskArray = [
-		// 1. pool에서 connection 하나 가져오기
-		function(callback) {
+		// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
+		function(callback){
+			return new Promise((resolve, reject)=>{
+				identifier(token, function(err, result){
+					if(err) reject(err);
+					else resolve(result);
+				});
+			}).then(function(identify_data){
+				callback(null, identify_data);
+			}).catch(function(err){
+				res.status(500).send({
+					message : err
+				});
+				return ;
+				console.log(err);
+			});
+		},
+		// 2. pool에서 connection 하나 가져오기
+		function(identify_data, callback) {
 			pool.getConnection(function(err, connection) {
 				if (err) {
 					res.status(500).send({
@@ -81,102 +83,42 @@ router.post('/', upload.array('image'), (req, res) => {
 					}); 
 					callback("pool.getConnection Error : " + err);
 				} else {
-					callback(null, connection);
+					callback(null, connection, identify_data);
 				}
-			});
-		},
-		// 2. token과 비교, 나중에 token에서 식별 데이터를 받아서 테이블 구분하자.
-		function(connection, callback){
-			let getIdentifiedDataQuery ="";
-			if(identify == 0) // user 일 때
-				getIdentifiedDataQuery = "SELECT user_idx, user_addr, user_addr_lat, user_addr_long, user_email, user_phone FROM user WHERE user_token = ? "
-			else // supplier 일 때
-				getIdentifiedDataQuery = "SELECT sup_idx, sup_addr, sup_addr_lat, sup_addr_long, sup_email, sup_phone FROM supplier WHERE sup_token = ? ";
-			
-			connection.query(getIdentifiedDataQuery, token, function(err, result){
-				if(result.length == 0){ // 해당 토큰이 없다
-					res.status(500).send({
-						message : "Invalied User"
-					});
-					connection.release();
-					callback("Invalied User");
-					return;
-				}
-				if(err) {
-					res.status(500).send({
-						message : "Internal Server Error"
-					});
-					connection.release();
-					callback("connection.query Error : " + err);
-				} else {
-					if(identify == 0){ // user 일 때 
-						console.log(result);
-						if(email === result[0].user_email && phone === result[0].user_phone){
-						console.log("success to verify");
-					} else {
-						res.status(400).send({
-							message : "Invalid token error"
-						});
-						connection.release();
-						callback("Invalid token error");
-						return;
-					}
-
-					}
-
-					else{ // supplier 일 때
-					if(email === result[0].sup_email && phone === result[0].sup_phone){
-						console.log("success to verify");
-					} else {
-						res.status(400).send({
-							message : "Invalid token error"
-						});
-						connection.release();
-						callback("Invalid token error");
-						return;
-					}
-					// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
-					sup_idx = result[0].sup_idx;
-
-				}
-
-					callback(null);
-
-				}
-				connection.release();
 			});
 		},
 		// 3. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
-		function(connection, callback){
-			let getProductIdxQuery = "SELECT pro_idx FROM product WHERE pro_cate = ? AND pro_name = ? AND pro_price = ? AND pro_sale_price = ? AND pro_ex_date = ? AND pro_regist_date = ? AND pro_info = ? AND mar_idx = ? AND pro_origin = ?";
+		function(connection, identify_data, callback){
 			let insertProductQuery = "INSERT INTO product (pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin, pro_istimesale, pro_deadline) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-			connection.query(insertProductQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin, pro_istimesale, pro_deadline], function(err, result){
+			connection.query(insertProductQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, identify_data.mar_idx, pro_origin, pro_istimesale, pro_deadline], function(err, result){
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
 					});
 					callback("connection.query Error : " + err);
+					connection.release();
 				} else {
-					// res.status(200).send({
-					// 	message : "Success to register product"
-					// });
+					callback(null, connection, identify_data);
 				}
 			});
-
-			connection.query(getProductIdxQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin], function(err, result){
+		},
+		function(connection, identify_data, callback){
+			let getProductIdxQuery = "SELECT pro_idx FROM product WHERE pro_cate = ? AND pro_name = ? AND pro_price = ? AND pro_sale_price = ? AND pro_ex_date = ? AND pro_regist_date = ? AND pro_info = ? AND mar_idx = ? AND pro_origin = ?";
+			connection.query(getProductIdxQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, identify_data.mar_idx, pro_origin], function(err, result){
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
 					});
 					callback("connection.query Error : " + err);
 				} else {
-					callback(null, connection, result[0]);
+					console.log(result);
+					callback(null, connection,identify_data, result[0]);
 				}
 			});
 		},
 
 		// 4. image는 테이블이 따로 있으므로 3에서 구한 pro_idx값을 이용해서 따로 저장해 준다.
-		function(connection, result, callback){
+		function(connection, identify_data, result, callback){
 			let insertProductImageQuery = "INSERT INTO product_image (pro_idx, pro_img) VALUES(?, ?)";
 			for(let i = 0 ; i < pro_image.length ; i++){
 				connection.query(insertProductImageQuery, [result.pro_idx, pro_image[i]], function(err, result){
@@ -185,28 +127,27 @@ router.post('/', upload.array('image'), (req, res) => {
 							message : "Internal Server Error"
 						});
 						callback("connection.query Error : " + err);
+						connection.release();
 					}
 				});
 
 			}
-			console.log(result);
 			// res.status(200).send({
 			// 	message : "Success to register product"
 			// });
-			callback(null, connection, result);
+			callback(null, connection, identify_data, result);
 			// callback(null, "Success to register product");
 		},
 		// 5. sell_list에 추가해 준다.
-		function(connection, result, callback){
+		function(connection, identify_data, result, callback){
 			let insertSell_ListImageQuery = "INSERT INTO sell_list (sup_idx, pro_idx) VALUES(?, ?)";
-
-		console.log("dd");
-			connection.query(insertSell_ListImageQuery, [sup_idx, result.pro_idx], function(err, result){
+			connection.query(insertSell_ListImageQuery, [identify_data._idx, result.pro_idx], function(err, result){
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
 					});
 					callback("connection.query Error : " + err);
+					connection.release();
 				}  else{
 					res.status(200).send({
 						message : "Success to register product"

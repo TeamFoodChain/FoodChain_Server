@@ -2,12 +2,12 @@ const jwt = require('jsonwebtoken');
 const secretKey = require('../config/secretKey.js').secret;
 
 module.exports = {
-  sign : function(email, phone, identify) {
+  sign : function(id, pw, identify) {
     const options = {
       algorithm : "HS256"
     };
     const payload = {
-      email : email,
+      id : id,
       pw : pw,
       identify : identify 
     };

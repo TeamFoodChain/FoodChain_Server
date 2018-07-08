@@ -2,106 +2,102 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('./jwt.js');
 const async = require('async');
-const pool = require('../config/dbPool.js');
+const pool = require('../config/dbPool_async.js');
 const secretKey = require('../config/secretKey.js').secret;
 
 
-let identify_data = {}; // user, supplier 식별 후 담을 데이터
+
 
 // user인지 supplier인지 식별 후, 데이터 전달
-module.exports = function(token){
+module.exports = function(token, callback){
+	let identify_data = {}; // user, supplier 식별 후 담을 데이터	
+
 	let decoded = jwt.verify(token);
 
 	// token verify
 	if (decoded == -1) {
-		res.status(500).send({
-			message : "token err"
-		});
+		callback("token err");
+		return ;
 	}
 
-	let email = decoded.email;
-	let phone = decoded.phone;
+	let id = decoded.id;
+	let pw = decoded.pw;
 	let identify = decoded.identify;
-	let result = function(){
+
+	(async function(){
+		console.log(id);
 		let getIdentifiedDataQuery ="";
 			if(identify == 0) // user 일 때
 				getIdentifiedDataQuery = "SELECT * FROM user WHERE user_token = ? "
 			else // supplier 일 때
 				getIdentifiedDataQuery = "SELECT * FROM supplier WHERE sup_token = ? ";
 			
-			connection.query(getIdentifiedDataQuery, token, function(err, result){
-				if(result.length == 0){ // 해당 토큰이 없다 
+			let connection = await pool.getConnection();
+			let result = await pool.query(getIdentifiedDataQuery, token);
+			let data = result[0]
+				if(data.length == 0){ // 해당 토큰이 없다 
 					connection.release();
+					console.log("Invalied User");
 					callback("Invalied User");
-					return;
+					return ; // return 시 err
 				}
 
-				if(err) {
-					res.status(500).send({
-						message : "Internal Server Error"
-					});
+				if(!data) {
 					connection.release();
-					callback("connection.query Error : " + err);
+					console.log("Internal Server Error");
+					callback("Internal Server Error");
+					return ;
 				} else {
 
-					if(identify == 0){ // user 일 때 
-						console.log(result);
-						if(email === result[0].user_email && phone === result[0].user_phone){
+					if(identify == 0){ // user 일 때, email 또는 phone이 id가 된다.
+						if((id === data[0].user_email || id === data[0].user_phone) && pw === data[0].user_pw){
 							console.log("success to verify");
-							idx = result[0].user_idx;
 						} else {
-							res.status(400).send({
-								message : "Invalid token error"
-							});
 							connection.release();
+							console.log("Invalid token error");
 							callback("Invalid token error");
-							return;
+							return ;
 						}
 
 						// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
-					identify_data._identify = identify;
-					identify_data._idx = result[0].user_idx;
-					identify_data._name = result[0].user_name;
-					identify_data._email = result[0].user_email;
-					identify_data._phone = result[0].user_phone;
-					identify_data._id = result[0].user_id;
-					identify_data._addr = result[0].user_addr;
-					identify_data._addr_lat = result[0].user_addr_lat;
-					identify_data._addr_long = result[0].user_addr_long;
+					identify_data.identify = identify;
+					identify_data.idx = data[0].user_idx;
+					identify_data.name = data[0].user_name;
+					identify_data.email = data[0].user_email;
+					identify_data.phone = data[0].user_phone;
+					identify_data.id = data[0].user_id;
+					identify_data.addr = data[0].user_addr;
+					identify_data.addr_lat = data[0].user_addr_lat;
+					identify_data.addr_long = data[0].user_addr_long;
 
 
 					}
 
 					else{ // supplier 일 때
-						if(email === result[0].sup_email && phone === result[0].sup_phone){
+						if((id === data[0].sup_email || id === data[0].sup_phone) && pw === data[0].sup_pw){
 							console.log("success to verify");
-							idx = result[0].supplier_idx;
 						} else {
-							res.status(400).send({
-								message : "Invalid token error"
-							});
 							connection.release();
+							console.log("Invalid token error");
 							callback("Invalid token error");
-							return;
+							return ;
 						}
 							// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
-					identify_data._identify = identify;
-					identify_data._idx = result[0].sup_idx;
-					identify_data._name = result[0].sup_name;
-					identify_data._email = result[0].sup_email;
-					identify_data._phone = result[0].sup_phone;
-					identify_data._id = result[0].sup_id;
-					identify_data._addr = result[0].sup_addr;
-					identify_data._addr_lat = result[0].sup_addr_lat;
-					identify_data._addr_long = result[0].sup_addr_long;
+					identify_data.identify = identify;
+					identify_data.idx = data[0].sup_idx;
+					identify_data.name = data[0].sup_name;
+					identify_data.email = data[0].sup_email;
+					identify_data.phone = data[0].sup_phone;
+					identify_data.id = data[0].sup_id;
+					identify_data.mar_idx = data[0].mar_idx;
+					identify_data.addr = data[0].sup_addr;
+					identify_data.addr_lat = data[0].sup_addr_lat;
+					identify_data.addr_long = data[0].sup_addr_long;
 				
 					}
 					connection.release();
-					console.log("Dd");
-					return identify_data;
 				}
-			});
-	};
+				callback(0, identify_data); // err : 0 result : identify_data
 
-	return identify_data;
+	})();
 }

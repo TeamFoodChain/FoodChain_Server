@@ -8,7 +8,7 @@ const mypageRouter = require('./mypage/index');
 const marketRouter = require('./market/index');
 const homeRouter = require('./home/index');
 const fridgeRouter = require('./fridge/index');
-const payRouter = require('./pay/index');
+const payRouter = require('./pay/pay'); // 경제 관련해서 추가되면 나중에 pay/index로 돌리기
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
