@@ -60,8 +60,8 @@ router.get('/', (req, res) =>{
 	
 		// 3. 주변 마켓 정보 검색 쿼리 다시 생각할 것
 		function(connection, identify_data, callback){
-			let getMarketQuery = "SELECT * FROM market";
-			connection.query(getMarketQuery, function(err, result){
+			let getMarketQuery = "SELECT * FROM market WHERE abs(? - mar_locate_lat) <= 0.009 AND abs(? - mar_locate_long) <= 0.0114";
+			connection.query(getMarketQuery, [identify_data.addr_lat, identify_data.addr_long], function(err, result){
 				if(result.length == 0){ // 해당 토큰이 없다 
 					connection.release();
 					callback("Invalied User");
@@ -76,9 +76,7 @@ router.get('/', (req, res) =>{
 					callback("connection.query Error : " + err);
 				} else {
 					for(let i = 0 ; i < result.length ; i++){
-						if((Math.abs(identify_data.addr_lat - result[i].mar_locate_lat)<= 0.009 && Math.abs(identify_data.addr_long - result[i].mar_locate_long) <=0.0114)){
-							mar_idx.push(result[i].mar_idx);
-						}
+						mar_idx.push(result[i].mar_idx);
 					}
 					callback(null, identify_data);
 					connection.release();
