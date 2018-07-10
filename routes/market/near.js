@@ -47,11 +47,14 @@ router.get('/', (req, res) => {
 
 		// 3. 주변 마켓 정보 검색 쿼리 다시 생각할 것
 		function(connection, identify_data, callback){
-			let getMarketQuery = "SELECT * FROM market";
-			connection.query(getMarketQuery, function(err, result){
-				if(result.length == 0){ 
+			let getMarketQuery = "SELECT * FROM market WHERE abs(? - mar_locate_lat) <= 0.009 AND abs(? - mar_locate_long) <= 0.0114";
+			connection.query(getMarketQuery, [identify_data.addr_lat, identify_data.addr_long], function(err, result){
+				if(result.length == 0){ // 해당 데이터가 없다 
+					res.status(200).send({
+						message : "No data"
+					});
 					connection.release();
-					callback("No Data");
+					callback("No data");
 					return;
 				}
 
@@ -62,16 +65,13 @@ router.get('/', (req, res) => {
 					connection.release();
 					callback("connection.query Error : " + err);
 				} else {
-					for(let i = 0 ; i < result.length ; i++){
-						if((Math.abs(identify_data.addr_lat - result[i].mar_locate_lat)<= 0.009 && Math.abs(identify_data.addr_long - result[i].mar_locate_long) <=0.0114)){
-							markets_locate ={};
+					for(let i = 0 ; i < result.length ; i++){markets_locate ={};
 							markets_locate.mar_idx = result[i].mar_idx;
 							markets_locate.mar_addr = result[i].mar_addr;
 							markets_locate.mar_locate_lat = result[i].mar_locate_lat;
 							markets_locate.mar_locate_long = result[i].mar_locate_long;
 							//markets_locate로 json 객체 만들어 주고
 							markets.push(markets_locate); //배열에 넣는다
-						}
 					}
 					nearData.addr = identify_data.addr;
 					nearData.addr_lat = identify_data.addr_lat;

@@ -54,11 +54,14 @@ router.get('/', (req, res) => {
 		},
 		// 3. 주변 마켓 정보 검색 쿼리 다시 생각할 것
 		function(connection,identify_data, callback){
-			let getMarketQuery = "SELECT * FROM market";
-			connection.query(getMarketQuery, function(err, result){
-				if(result.length == 0){ // 해당 토큰이 없다 
+			let getMarketQuery = "SELECT * FROM market WHERE abs(? - mar_locate_lat) <= 0.009 AND abs(? - mar_locate_long) <= 0.0114";
+			connection.query(getMarketQuery,[identify_data.addr_lat, identify_data.addr_long], function(err, result){
+				if(result.length == 0){ // 해당 데이터가 없다 
+					res.status(200).send({
+						message : "No data"
+					});
 					connection.release();
-					callback("Invalied User");
+					callback("No data");
 					return;
 				}
 
@@ -70,9 +73,7 @@ router.get('/', (req, res) => {
 					callback("connection.query Error : " + err);
 				} else {
 					for(let i = 0 ; i < result.length ; i++){
-						if((Math.abs(identify_data.addr_lat - result[i].mar_locate_lat)<= 0.009 && Math.abs(identify_data.addr_long - result[i].mar_locate_long) <=0.0114)){
-							market.push(result[i]);
-						}
+						market.push(result[i]);
 					}
 					callback(null, connection, identify_data);
 				}
@@ -259,7 +260,7 @@ router.get('/', (req, res) => {
 			console.log("res");
 			res.status(200).send({
 				message : "success",
-				saleProduct_info : saleProduct_info
+				data : saleProduct_info
 			});
 			//console.log(result);
 		}
