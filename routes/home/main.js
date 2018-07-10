@@ -212,9 +212,9 @@ router.get('/', (req, res) =>{
 			let getRecoQuery ="SELECT pro_idx, pro_name, pro_price, pro_sale_price, mar_addr, mar_locate_lat, mar_locate_long FROM market NATURAL JOIN product WHERE pro_cate = ? AND pro_issell AND pro_istimesale = 0 AND mar_idx IN (SELECT mar_idx FROM product WHERE pro_cate = ?)";
 
 			if(identify ==0)
-				getInterestQuery = "SELECT user_interest FROM interest WHERE user_idx = ?";
+				getInterestQuery = "SELECT interest FROM interest WHERE user_idx = ?";
 			else
-				getInterestQuery = "SELECT user_interest FROM interest WHERE sup_idx = ?";
+				getInterestQuery = "SELECT interest FROM interest WHERE sup_idx = ?";
 
 			(async function(){
 				let connections = await pool_async.getConnection();
