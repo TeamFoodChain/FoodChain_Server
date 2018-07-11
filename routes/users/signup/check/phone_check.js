@@ -11,24 +11,34 @@ router.post('/',async(req,res)=>{
         message:"Null Value"
       }
     );
-  }else{
-    let checkUserQuery = 'SELECT * FROM user WHERE user_phone =?';
-    let checkUserResult = await db.queryParam_Arr(checkUserQuery,[phone]);
-    let checkSupplierQuery = 'SELECT * FROM supplier WHERE sup_phone =?';
-    let checkSupplierResult = await db.queryParam_Arr(checkSupplierQuery,[phone]);
+  }else{   
+    var regExp = /^[0-9]+$/;
 
-    if(!checkUserResult || !checkSupplierResult){
-      res.status(500).send({
-        message:"Internal Server Error"
-  	  });
-    }else if (checkUserResult.length === 1 || checkSupplierResult.length === 1){
-      res.status(400).send({
-        message:"This phone number already exists."
-      });
+    if (!regExp.test(phone)){
+      res.status(400).send(
+        {
+          message:"Invalid data"
+        }
+      );
     }else{
-      res.status(200).send({
-         message:"Success phone number check"
-      });
+      let checkUserQuery = 'SELECT * FROM user WHERE user_phone =?';
+      let checkUserResult = await db.queryParam_Arr(checkUserQuery,[phone]);
+      let checkSupplierQuery = 'SELECT * FROM supplier WHERE sup_phone =?';
+      let checkSupplierResult = await db.queryParam_Arr(checkSupplierQuery,[phone]);
+
+      if(!checkUserResult || !checkSupplierResult){
+        res.status(500).send({
+          message:"Internal Server Error"
+        });
+      }else if (checkUserResult.length === 1 || checkSupplierResult.length === 1){
+        res.status(400).send({
+          message:"This phone number already exists."
+        });
+      }else{
+        res.status(200).send({
+          message:"Success phone number check"
+        });
+      }
     }
   }
 });

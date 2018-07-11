@@ -11,15 +11,25 @@ router.post('/',async(req,res)=>{
         message:"Null Value"
       }
     );
-  }else{
-    if (pw === pw_check){
-      res.status(200).send({
-         message:"Success password check"
-      });
+  }else{   
+    let regExp = /^[a-z0-9_]{4,20}$/;
+
+    if ((!regExp.test(pw)) || (!regExp.test(pw_check))){
+      res.status(400).send(
+        {
+          message:"Invalid data"
+        }
+      );
     }else{
-      res.status(400).send({
-         message:"Password is not matching."
-      });
+      if (pw === pw_check){
+        res.status(200).send({
+          message:"Success password check"
+        });
+      }else{
+        res.status(400).send({
+          message:"Password is not matching."
+        });
+      }
     }
   }
 });
