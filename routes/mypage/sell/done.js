@@ -67,22 +67,25 @@ router.get('/', (req, res) => {
 		// 4. 받은 pro_idx와 비교, 팔렸는 지 확인한 후 팔린 물건을 가져온다. pro_issell==1 일 때 팔림
 		function(pro_idx, callback){
 			let getSaledProductDataQuery = "SELECT * FROM product WHERE pro_idx = ? AND pro_issell = 1";
-			console.log(pro_idx);
+
 
 			(async function(){
-				let connections = await pool_async.getConnection();
+				let connection = await pool_async.getConnection();
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(pro_idx);
-					});
-				}
+				for(let i = 0 ; i < pro_idx.length ; i++){
+					let value = pro_idx[i];
+					let result = await connection.query(getSaledProductDataQuery, value.pro_idx);
+					let data = result[0];
 
-				let makeReserve = function(i, pro_idx){
-					reserve(async function(pro_idx){
-						let value = pro_idx[i];
-						let result = await pool_async.query(getSaledProductDataQuery, value.pro_idx);
-						let data = result[0];
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						connection.release();
+						callback("connection.query Error : " + err);
+					}
+
+					if(data.length != 0){
 						product = {};
 						product.pro_idx = data[0].pro_idx;
 						product.pro_name = data[0].pro_name;
@@ -91,72 +94,44 @@ router.get('/', (req, res) => {
 						product.pro_info = data[0].pro_info;
 						saledProduct_info[i] = {};
 						saledProduct_info[i].product = product;
+					} 
 
-						if(i + 1 == pro_idx.length){
-						end();
-						connections.release();
-					}
-				});
 				}
-				// pro_idx 가 없으면 (상품이 없을 경우) 다음 단계 진행
-				if(pro_idx.length == 0){
-					callback(null, pro_idx);
-				}
-
-				for(var i = 0 ; i < pro_idx.length ; i++){
-					makeReserve(i, pro_idx);
-				}
-
+				callback(null, pro_idx);
+				connection.release();
 			})();
-
 		},
 		// 5. 이미지도 가져온다.
 		function(pro_idx, callback){
 			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
 
-				(async function(){
-				let connections = await pool_async.getConnection();
+			(async function(){
+				let connection = await pool_async.getConnection();
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(pro_idx);
-					});
-				}
-
-				let makeReserve = function(i, pro_idx){
-					reserve(async function(pro_idx){
-						let value = pro_idx[i];
-						let result = await pool_async.query(getProductImageQuery, value.pro_idx);
-						let data = result[i];
-						if(data.length != 0){
-							product_image = [];
-							for(let j = 0 ; j < data.length ; j++){
-								product_image[j] = data[j].pro_img;
-							}
-							saledProduct_info[i].product.pro_img = product_image.slice(0);
-						}
-
-						if(i + 1 == pro_idx.length){
-						end();
-						connections.release();
+				for(let i = 0 ; i < saledProduct_info.length ; i++){
+					let value = saledProduct_info[i];
+					let result = await pool_async.query(getProductImageQuery, value.product.pro_idx);
+					let data = result[i];
+					//console.log("i : "+ i + " " +result[i]);
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						connection.release();
+						callback("connection.query Error : " + err);
 					}
-				});
-				}
-				//pro_idx가 없을 경우(상품이 없을 경우) 다음 단계 진행 (끝)
-				if(pro_idx.length == 0){
-					callback(null, pro_idx);
-				}
 
-				for(var i = 0 ; i < pro_idx.length ; i++){
-					makeReserve(i, pro_idx);
+					if(data){
+						product_image = [];
+						for(let j = 0 ; j < data.length ; j++){
+							product_image[j] = data[j].pro_img;
+						}
+						saledProduct_info[i].product.pro_img = product_image.slice(0);
+					}
 				}
-
-				let end = function(){
-					callback(null, "Success to load");
-				}
+				callback(null, "Success to load");
+				connection.release();
 			})();
-
-
 		}
 	];
 

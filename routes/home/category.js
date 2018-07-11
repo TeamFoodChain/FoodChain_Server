@@ -20,10 +20,11 @@ router.get('/', (req, res) => {
 	let mar_idx_distance = []; // market을 이용해 반경 내에서 거리순으로 재배열
 
     let token = req.headers.token;
-	
+
 	let taskArray = [
 		// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
 		function(callback){
+			let email;
 			return new Promise((resolve, reject)=>{
 				identifier(token, function(err, result){
 					if(err) reject(err);
@@ -54,11 +55,14 @@ router.get('/', (req, res) => {
 		},
 		// 3. 주변 마켓 정보 검색 쿼리 다시 생각할 것
 		function(connection,identify_data, callback){
-			let getMarketQuery = "SELECT * FROM market";
-			connection.query(getMarketQuery, function(err, result){
-				if(result.length == 0){ // 해당 토큰이 없다 
+			let getMarketQuery = "SELECT * FROM market WHERE abs(? - mar_locate_lat) <= 0.009 AND abs(? - mar_locate_long) <= 0.0114";
+			connection.query(getMarketQuery,[identify_data.addr_lat, identify_data.addr_long], function(err, result){
+				if(result.length == 0){ // 해당 데이터가 없다 
+					res.status(200).send({
+						message : "No data"
+					});
 					connection.release();
-					callback("Invalied User");
+					callback("No data");
 					return;
 				}
 
@@ -70,17 +74,16 @@ router.get('/', (req, res) => {
 					callback("connection.query Error : " + err);
 				} else {
 					for(let i = 0 ; i < result.length ; i++){
-						if((Math.abs(identify_data.addr_lat - result[i].mar_locate_lat)<= 0.009 && Math.abs(identify_data.addr_long - result[i].mar_locate_long) <=0.0114)){
-							market.push(result[i]);
-						}
+						market.push(result[i]);
 					}
-					callback(null, connection, identify_data);
+					callback(null, identify_data);
+					connection.release();
 				}
 			});
 		},
 
 		// 4. 반경(2km)안에 있는 market의 idx를 가지고, 거리 순으로 mar_idx를 정렬
-		function(connection, identify_data, callback){ // data : identify_data
+		function(identify_data, callback){ // data : identify_data
 			if(market.length == 0){ // 주변 마켓이 아무것도 없을 때 예외처리
 
 			}
@@ -97,89 +100,53 @@ router.get('/', (req, res) => {
 			});
 			//console.log(mar_idx_distance);
 
-			callback(null, connection);
+			callback(null);
 		}, 
 		// 4. 반경 안에 있는, 거리 순으로 정렬된 마켓에 있는 상품들을 가져온다. (팔린 상품, timesale 상품 제외)
-		function(connection, callback){
+		function(callback){
 			let dd = [];
 			let getProuctFromMarketQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 AND pro_istimesale = 0 AND pro_cate LIKE" + "'%" + pro_cate + "%'";
 			let cnt = 0;
-
 			(async function(){
-				let connections = await pool_async.getConnection();
+				let connection = await pool_async.getConnection();
+				for(let i = 0 ; i < mar_idx_distance.length ; i++){
+					let result = await connection.query(getProuctFromMarketQuery, mar_idx_distance[i][0]);
+					let data = result[0];
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(mar_idx_distance);
-						console.log("3");
-					});
-				}
-
-				let makeReserve = function(i, mar_idx_distance){
-					reserve(async function(mar_idx_distance){
-						console.log("2");
-						console.log("i :" + i);
-						let result = await pool_async.query(getProuctFromMarketQuery, mar_idx_distance[i][0]); //[][0] : mar_idx, [][1] : distance
-						dd.push(result[0]);
-						console.log("result i :" + result[0]);
-						let data = result[0];
-
-
-						return new Promise((resolve, reject) => { // await를 썻지만 결국 비동기기 때문에 제어하기 위해 promise를 씀
-							resolve();
-							if(result === undefined){
-							res.status(500).send({
-								message : "Internal Server Error"
-							});
-							connection.release();
-							callback("connection.query Error : " + err);
-						}
-						//console.log("length : " ,data.length);
-						//console.log("data : ", data);
-						if(data.length != 0){
-							data.forEach(function(v, j){
-								console.log("foreach : " + j);
-								//console.log("sdsdsd : ", v);
-								product = {};
-								product.pro_idx = v.pro_idx;
-								product.pro_name = v.pro_name;
-								product.pro_price = v.pro_price;
-								product.pro_sale_price = v.pro_sale_price;
-								product.pro_ex_date = v.pro_ex_date;
-								product.pro_regist_date = v.pro_regist_date;
-								product.pro_info = v.pro_info;
-								product.mar_idx = mar_idx_distance[i][0];
-								product.pro_img = [];
-								product.dist = mar_idx_distance[i][1];
-								saleProduct_info[cnt] = {};
-								saleProduct_info[cnt] = product;
-								//console.log(saleProduct_info[cnt]);
-								cnt++;
-							});
-						}
-						}).then(function(){
-							if(i + 1 == mar_idx_distance.length){
-							//console.log(dd);
-							console.log("end");
-							end();
-					}
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
 						});
-						
-					
+						connection.release();
+						callback("connection.query Error : " + err);
+					}
 
-				});
+					if(data.length != 0){
+						data.forEach(function(v, j){
+							console.log("foreach : " + j);
+						//console.log("sdsdsd : ", v);
+						product = {};
+						product.pro_idx = v.pro_idx;
+						product.pro_name = v.pro_name;
+						product.pro_price = v.pro_price;
+						product.pro_sale_price = v.pro_sale_price;
+						product.pro_ex_date = v.pro_ex_date;
+						product.pro_regist_date = v.pro_regist_date;
+						product.pro_info = v.pro_info;
+						product.mar_idx = mar_idx_distance[i][0];
+						product.pro_img = [];
+						product.dist = mar_idx_distance[i][1];
+						saleProduct_info[cnt] = {};
+						saleProduct_info[cnt] = product;
+						//console.log(saleProduct_info[cnt]);
+						cnt++;
+					});
+					}
 
 				}
-				
-				for(var i = 0 ; i < mar_idx_distance.length ; i++){ 
-					makeReserve(i, mar_idx_distance);
-					console.log("1");
-				}
 
-				let end = function(){
-					callback(null);
-					connections.release();
-				}
+				callback(null);
+				connection.release();
 			})();
 		},
 
@@ -187,67 +154,43 @@ router.get('/', (req, res) => {
 		function(callback){
 			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
 
-				(async function(){
-				let connections = await pool_async.getConnection();
+			(async function(){
+				let connection = await pool_async.getConnection();
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(saleProduct_info);
+				for(let i = 0 ; i < saleProduct_info.length ; i++){
+					let result = await connection.query(getProductImageQuery, saleProduct_info[i].pro_idx);
+					let data = result[0];
+
+
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						connection.release();
+						callback("connection.query Error : " + err);
+					}
+
+					if(data.length != 0){
+						product_image = [];
+						for(let j = 0 ; j < data.length ; j++){
+							product_image[j] = data[j].pro_img;
+						}
+						//console.log("dddd : "+ product_image); // 여기가 callback 되고 나서, res.status가 찍히고 나서도 실행이 된다. 왜그럴까?
+						saleProduct_info[i].pro_img = product_image.slice(0);
+					}
+
+					saleProduct_info.sort(function(a, b){
+						if(a.dist === b.dist){
+							return 0;
+						} else {
+							return a.dist - b.dist;
+						}
 					});
 				}
 
-				let makeReserve = function(i, pro_idx){
-					reserve(async function(pro_idx){
-						let value = pro_idx[i];
-						let result = await pool_async.query(getProductImageQuery, pro_idx[i].pro_idx);
-						let data = result[0];
-
-						return new Promise((resolve, reject)=>{
-							resolve();
-							if(data.length != 0){
-							product_image = [];
-							for(let j = 0 ; j < data.length ; j++){
-								product_image[j] = data[j].pro_img;
-							}
-							console.log("dddd : "+ product_image); // 여기가 callback 되고 나서, res.status가 찍히고 나서도 실행이 된다. 왜그럴까?
-							saleProduct_info[i].pro_img = product_image.slice(0);
-						}
-						}).then(function(){
-							if(i + 1 == pro_idx.length){
-							saleProduct_info.sort(function(a, b){
-								console.log(a.dist);
-								if(a.dist === b.dist){
-									return 0;
-								} else {
-									return a.dist - b.dist;
-								}
-							});
-						end();
-					}
-						});
-						
-
-						
-				});
-				}
-
-			
-				//pro_idx가 없을 경우(상품이 없을 경우) 다음 단계 진행 (끝)
-				if(saleProduct_info.length == 0){
-					callback(null, "no data");
-					connections.release();
-				}
-
-				for(var i = 0 ; i < saleProduct_info.length ; i++){
-					makeReserve(i, saleProduct_info);
-				}
-
-				let end = function(){
-					callback(null, "Success to load");
-					connections.release();
-				}
+				callback(null, "Success to load");
+				connection.release();
 			})();
-
 		}
 		];
 
@@ -259,7 +202,7 @@ router.get('/', (req, res) => {
 			console.log("res");
 			res.status(200).send({
 				message : "success",
-				saleProduct_info : saleProduct_info
+				data : saleProduct_info
 			});
 			//console.log(result);
 		}

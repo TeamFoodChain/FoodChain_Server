@@ -16,17 +16,18 @@ const secretKey = require('../../../config/secretKey.js').secret;
 const moment = require('moment');
 const s3 = require('../../../config/s3multer.js');
 const identifier = require('../../../module/token_identifier.js');
+const multer = require('multer');
+const upload = multer();
 
-router.get('/', (req, res, next) => {
-	let a = jwt.sign("leesd556@gmail.com", "01021121891", 0);
-	console.log(a);
-	res.render('index', { title: 'fridge/store/register'});
-	console.log(req.url);
+router.get('/', (req, res) => {
+
 });
 
 // 최대 이미지 개수 미설정
-router.post('/', s3.upload.array('image'), (req, res) => {
+router.post('/', upload.array('pro_img'), (req, res) => {
 	let token = req.headers.token;
+
+	let pro_idx = req.body.pro_idx;
 
 	let pro_name = req.body.pro_name;
 	let pro_cate = req.body.pro_cate;
@@ -41,13 +42,6 @@ router.post('/', s3.upload.array('image'), (req, res) => {
 
 	let pro_regist_date = moment().format("YYYY-MM-DD HH:mm:ss");
 
-	if(req.files){
-		// req.file에서 이미지 가져와서 key 값( s3 상에 저장되는 file name, config/s3multer에서 설정해 준것)을 저장
-		for(let i = 0 ; i < req.files.length ; i++){
-			pro_image[i] = req.files[i].location;
-		}
-	}	
-
 	// 상품의 카테고리, 이름, 유통기한의 값이 없는 경우
 	if(!pro_name || !pro_cate || !pro_ex_date || !pro_price || !pro_sale_price || !pro_origin || !pro_istimesale || !pro_deadline){
 		res.status(400).send({
@@ -55,6 +49,17 @@ router.post('/', s3.upload.array('image'), (req, res) => {
 		});
 		return ;
 	}
+
+	if(!pro_idx){
+	 // pro_idx가 없을 때 (새로운 상품을 등록)
+		// if(req.files){ // 이미지 db, s3에 저장
+		// 	// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
+		// 	for(let i = 0 ; i < req.files.length ; i++){
+		// 		pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
+		// 		s3.upload(req.files[i]);
+		// 	}
+		// }
+
 
 	let taskArray = [
 		// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
@@ -86,6 +91,22 @@ router.post('/', s3.upload.array('image'), (req, res) => {
 					callback(null, connection, identify_data);
 				}
 			});
+		},
+		// 3. s3에 이미지 등록
+		function(connection, identify_data, callback){
+			if(req.files){ // 이미지 db, s3에 저장
+				console.log(req.files);
+			// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
+				for(let i = 0 ; i < req.files.length ; i++){
+					pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
+					//s3.upload(req.files[i]);
+				}
+				(async function(){
+					let result = await s3.upload(req.files);
+					console.log(result);
+						callback(null, connection, identify_data);
+				})();
+			} 
 		},
 		// 3. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
 		function(connection, identify_data, callback){
@@ -147,9 +168,6 @@ router.post('/', s3.upload.array('image'), (req, res) => {
 					callback("connection.query Error : " + err);
 					connection.release();
 				}  else{
-					res.status(200).send({
-						message : "Success to register product"
-					});
 					callback(null, "Success to register product");
 				connection.release();
 				}
@@ -160,10 +178,266 @@ router.post('/', s3.upload.array('image'), (req, res) => {
 			if(err){
 				console.log(err);
 			} else {
+				res.status(200).send({
+					message : "Success to register product"
+				});
 				console.log(result);
 			}
 		});
+
+
+	} else{ //pro_idx가 있을 때 (상품을 수정)
+		let taskArray = [
+			// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
+			function(callback){
+				return new Promise((resolve, reject)=>{
+					identifier(token, function(err, result){
+						if(err) reject(err);
+						else resolve(result);
+					});
+				}).then(function(identify_data){
+					callback(null);
+				}).catch(function(err){
+					res.status(500).send({
+						message : err
+					});
+					return ;
+					console.log(err);
+				});
+			},
+			// 2. pool에서 connection 하나 가져오기
+			function(callback) {
+				pool.getConnection(function(err, connection) {
+					if (err) {
+						res.status(500).send({
+							message: "Internal Server Error"
+						}); 
+						callback("pool.getConnection Error : " + err);
+					} else {
+						callback(null, connection);
+					}
+				});
+			},
+
+			// 3. 수정사항 등록
+			function(connection, callback){
+				let UpdateProductQuery = "UPDATE product SET pro_name = ?, pro_cate = ?, pro_ex_date = ?, pro_info = ? , pro_price = ?, pro_sale_price = ?, pro_origin = ?, pro_istimesale = ?, pro_deadline = ? WHERE pro_idx = ?";
+
+				connection.query(UpdateProductQuery, [pro_name, pro_cate, pro_ex_date, pro_info, pro_price, pro_sale_price, pro_origin, pro_istimesale, pro_deadline, pro_idx], function(err, result){
+					if(err) {
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						callback("connection.query Error : " + err);
+						connection.release();
+					} else {
+						callback(null, connection);
+					}
+				});
+			},
+			// 3. product image 가져오기
+			function(connection, callback){
+				let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";		
+
+				connection.query(getProductImageQuery, pro_idx, function(err, result){
+					if(err) {
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						callback("connection.query Error : " + err);
+						connection.release();
+					}		
+
+					if(result.length != 0){
+						for(let i = 0 ; i < result.length ; i++){
+							pro_image[i] = {};
+							pro_image[i].Key = result[i].pro_img.substring(55, result[i].pro_img.length);
+						}
+						console.log(pro_image);
+					}
+					callback(null, connection);
+				});
+			},
+			// 4. DB에서 image 삭제
+			function(connection, callback){
+				let DeletePorductImageQuery = "DELETE FROM product_image WHERE pro_idx = ?";
+
+				connection.query(DeletePorductImageQuery, pro_idx, function(err, result){
+					if(err) {
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						callback("connection.query Error : " + err);
+						connection.release();
+					} else {
+						callback(null, connection);
+					}
+				});
+			},
+
+			// 5. s3에서 이미지 삭제
+			function(connection, callback){
+				if(pro_image.length == 0){
+				} else{
+					s3.delete(pro_image);
+				}
+					callback(null, connection);
+				},
+
+			// 6. s3에 새로운 이미지 등록
+			function(connection, callback){
+				if(req.files){ // 이미지 db, s3에 저장
+					// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
+					for(let i = 0 ; i < req.files.length ; i++){
+						pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
+						s3.upload(req.files[i]);
+					}
+				}
+				callback(null, connection);
+			},
+			// 7. DB에 새로운 이미지를 등록
+			function(connection, callback){
+			let insertProductImageQuery = "INSERT INTO product_image (pro_idx, pro_img) VALUES(?, ?)";
+			for(let i = 0 ; i < pro_image.length ; i++){
+				connection.query(insertProductImageQuery, [pro_idx, pro_image[i]], function(err, result){
+					if(err) {
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						callback("connection.query Error : " + err);
+						connection.release();
+					} 
+				});
+
+			}
+			callback(null, "Success to modify data");
+			connection.release();
+			}
+			];
+		async.waterfall(taskArray, function(err, result){
+			if(err){
+				console.log(err);
+			} else {
+				res.status(200).send({
+					message : "Success to modify data"
+				});
+				console.log(result);
+			}
+		});			
+	}
+
 	});
 
+router.delete('/', (req, res) => {
+	let token = req.headers.token;
 
+	let pro_idx = req.body.pro_idx;
+	let pro_images = []; // 삭제 할 product image를 담는 배열
+
+	// 상품의 카테고리, 이름, 유통기한의 값이 없는 경우
+	console.log(pro_idx);
+	if(!pro_idx){
+		res.status(200).send({
+			message : "No pro_idx value"
+		});
+		return ;
+	}
+
+	let taskArray = [
+		// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
+		function(callback){
+			return new Promise((resolve, reject)=>{
+				identifier(token, function(err, result){
+					if(err) reject(err);
+					else resolve(result);
+				});
+			}).then(function(identify_data){
+				callback(null);
+			}).catch(function(err){
+				res.status(500).send({
+					message : err
+				});
+				return ;
+				console.log(err);
+			});
+		},
+		// 2. pool에서 connection 하나 가져오기
+		function(callback) {
+				pool.getConnection(function(err, connection) {
+				if (err) {
+					res.status(500).send({
+						message: "Internal Server Error"
+					}); 
+					callback("pool.getConnection Error : " + err);
+				} else {
+					callback(null, connection);
+				}
+			});
+		},
+		// 3. product image 가져오기
+		function(connection, callback){
+			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
+
+			connection.query(getProductImageQuery, pro_idx, function(err, result){
+				if(err) {
+					res.status(500).send({
+						message : "Internal Server Error"
+					});
+					callback("connection.query Error : " + err);
+					connection.release();
+				}
+
+				if(result.length != 0){
+					for(let i = 0 ; i < result.length ; i++){
+						pro_images[i] = {};
+						pro_images[i].Key = result[i].pro_img.substring(55, result[i].pro_img.length);
+					}
+					console.log(pro_images);
+				}
+				callback(null, connection);
+			});
+		},
+		// 4. product table에서 row삭제, 참조된 테이블의 row도 같이 삭제
+		function(connection, callback){
+			let deleteProductQuery = "DELETE FROM product WHERE pro_idx = ?";
+
+			connection.query(deleteProductQuery, pro_idx, function(err, result){
+				if(err) {
+					res.status(500).send({
+						message : "Internal Server Error"
+					});
+					callback("connection.query Error : " + err);
+					connection.release();
+				}
+				if(result.length == 0){
+					callback("Null Value");
+					connection.release();
+				} else {
+					callback(null);
+					connection.release();
+				}
+			});
+		},
+		// 5. s3 상에서도 image 삭제
+		function(callback){
+			if(pro_images.length == 0){
+			} else{
+				s3.delete(pro_images);
+			}
+				callback(null, "Success to delete product");
+		}
+		];
+
+	async.waterfall(taskArray, function(err, result){
+			if(err){
+				console.log(err);
+			} else {
+				res.status(200).send({
+					message : "Success to delete product"
+				});
+				console.log(result);
+			}
+		});
+
+});
 module.exports = router;

@@ -73,21 +73,22 @@ router.get('/', (req, res) => {
 			let getBookmarkProductQuery = "SELECT * FROM product NATURAL JOIN market WHERE pro_idx = ?";
 
 			(async function(){
-				let connections = await pool_async.getConnection();
+				let connection = await pool_async.getConnection();
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(pro_idx);
-					});
-				}
+				for(let i = 0 ; i < pro_idx.length ; i++){
+					let value = pro_idx[i];
+					let result = await pool_async.query(getBookmarkProductQuery, value.pro_idx);
+					let data = result[0];
 
-				let makeReserve = function(i, pro_idx){
-					reserve(async function(pro_idx){
-						let value = pro_idx[i];
-						console.log(value);
-						console.log(value.pro_idx);
-						let result = await pool_async.query(getBookmarkProductQuery, value.pro_idx);
-						let data = result[0];
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						connection.release();
+						callback("connection.query Error : " + err);
+					}
+
+					if(data.length != 0){
 						product = {};
 						product.pro_idx = data[0].pro_idx;
 						product.pro_name = data[0].pro_name;
@@ -96,72 +97,44 @@ router.get('/', (req, res) => {
 						product.pro_info = data[0].pro_info;
 						bookmark_info[i] = {};
 						bookmark_info[i].product = product;
-
-						if(i + 1 == pro_idx.length){
-							end();
-							connections.release();
-						}
-					});
+					} 
 				}
 
-				for(var i = 0 ; i < pro_idx.length ; i++){
-					makeReserve(i, pro_idx);
-				}
-
-				let end = function(){
-					callback(null, pro_idx);
-				}
+				callback(null, pro_idx);
+				connection.release();
 			})();
-
 		},
 
 		function(pro_idx, callback){
 			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
 
 			(async function(){
-				let connections = await pool_async.getConnection();
+				let connection = await pool_async.getConnection();
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(pro_idx);
-					});
-				}
+				for(let i = 0 ; i < bookmark_info.length ; i++){
+					let value = bookmark_info[i];
+					let result = await pool_async.query(getProductImageQuery, value.product.pro_idx);
+					let data = result[i];
+					//console.log("i : "+ i + " " +result[i]);
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						connection.release();
+						callback("connection.query Error : " + err);
+					}
 
-				let makeReserve = function(i, pro_idx){
-					reserve(async function(pro_idx){
-						let value = pro_idx[i];
-						let result = await pool_async.query(getProductImageQuery, value.pro_idx);
-						let data = result[i];
-						console.log(data);
-						if(data.length != 0){
-							product_image = [];
-							for(let j = 0 ; j < data.length ; j++){
-								product_image[j] = data[j].pro_img;
-							}
-							bookmark_info[i].product.pro_img = product_image.slice(0);
+					if(data){
+						product_image = [];
+						for(let j = 0 ; j < data.length ; j++){
+							product_image[j] = data[j].pro_img;
 						}
-
-						if(i + 1 == pro_idx.length){
-							end();
-							connections.release();
-						}
-					});
+						bookmark_info[i].product.pro_img = product_image.slice(0);
+					}
 				}
-
-				for(var i = 0 ; i < pro_idx.length ; i++){
-					makeReserve(i, pro_idx);
-				}
-
-				let end = function(){
-					res.status(200).send({
-						message : "Success to load",
-						data : bookmark_info
-					});
-					callback(null, "Success to load");
-				}
+				callback(null, "Success to load");
+				connection.release();
 			})();
-
-
 		}
 		];
 		async.waterfall(taskArray, function(err, result){
