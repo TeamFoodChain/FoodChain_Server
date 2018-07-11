@@ -36,6 +36,7 @@ router.post('/',async(req,res)=>{
       res.status(500).send({
         message:"fail from server"
       });
+      console.log("insert query Error : ", insertResult);
     }else{
       token = jwt.sign(user_email, user_pw, 0);
       if(!token){

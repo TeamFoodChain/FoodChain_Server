@@ -50,9 +50,10 @@ router.post('/',async(req,res)=>{
       }
       if(!insertResult){
         res.status(500).send({
-          message:"fail from server - insert into supplier error",
+          message:"insert into supplier error",
           data:sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx
         });
+        console.log("insert into supplier error");
       }else{
         token = jwt.sign(sup_email, sup_pw, 1);
         if(!token){
