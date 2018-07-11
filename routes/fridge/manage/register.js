@@ -19,6 +19,9 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
 
     let fri_img = [];
 
+    let registerQuery;
+    let registerResult;
+
     if(!fri_cate || !fri_name || !fri_ex_date || !fri_info || !token || !fri_regist_date){
         res.status(400).send({
             message : "Value Error : Fail from client"
@@ -51,46 +54,34 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                         }
                     }
 
-                    let registerQuery = "INSERT INTO fridge_item (fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date) VALUES(?, ?, ?, ?, ?)";
-                    let registerResult = await db.queryParam_Arr(registerQuery, [fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date]);
+                    registerQuery = "INSERT INTO fridge_item (fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date) VALUES(?, ?, ?, ?, ?)";
+                    registerResult = await db.queryParam_Arr(registerQuery, [fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date]);
+                    let fri_item_idx = registerResult.insertId;
                     
                     if (!registerResult){ 
                         res.status(500).send({
                             message : "Register Error"
                         });
                     }else{
-                        let checkQuery = "SELECT LAST_INSERT_ID() as fri_item_idx";
-                        let checkResult = await db.queryParam_Arr(checkQuery);
-
-                        let fri_item_idx = checkResult[0].fri_item_idx;
-
-                        if (!checkResult){
-                            res.status(500).send({
-                                message : "fri_item_idx load Error"
+                        registerQuery = "INSERT INTO fridge (user_idx, fri_item_idx) VALUES (?, ?)";
+                        registerResult = await db.queryParam_Arr(registerQuery, [user_idx, fri_item_idx]);
+                        
+                        if (!registerResult){
+                            res.status(400).send({
+                                message : "fri_item insert Error"
                             });
                         }else{
-                            let registerQuery = "INSERT INTO fridge (user_idx, fri_item_idx) VALUES (?, ?)";
-                            let registerResult = await db.queryParam_Arr(registerQuery, [user_idx, fri_item_idx]);
-
-                            console.log(user_idx, fri_item_idx);
-                            
-                            if (!registerResult){
-                                res.status(400).send({
-                                    message : "fri_item_idx load Error 실패"
-                                });
-                            }else{
-                                let registerQuery = "INSERT INTO fridge_item_image (fri_item_idx, fri_img) VALUES (?, ?)";
-                                for(let i = 0 ; i < fri_img.length ; i++){
-                                    let registerResult = await db.queryParam_Arr(registerQuery, [fri_item_idx, fri_img[i]]);
-                                    if(!registerResult) {
-                                        res.status(500).send({
-                                            message : "Internal Server Error"
-                                        });
-                                    }else{
-                                        res.status(200).send({
-                                            message : "Success to upload Data"
-                                        });
-                                    }
+                            registerQuery = "INSERT INTO fridge_item_image (fri_item_idx, fri_img) VALUES (?, ?)";
+                            for(let i = 0 ; i < fri_img.length ; i++){
+                                registerResult = await db.queryParam_Arr(registerQuery, [fri_item_idx, fri_img[i]]);
+                                if(!registerResult) {
+                                    res.status(500).send({
+                                        message : "Internal Server Error"
+                                    });
+                                }else{
+                                    res.status(200).send({
+                                        message : "Success to upload Data"
+                                    });
                                 }
                             }
                         }
