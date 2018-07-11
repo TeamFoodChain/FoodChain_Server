@@ -3,46 +3,54 @@ const router = express.Router();
 const db = require('../../../module/pool.js');
 const jwt = require('../../../module/jwt.js');
 
-router.post('/', async function(req, res, next) {
+router.post('/', async function(req, res) {
     let token = req.headers.token;
-    console.log(token);
+    let interest = req.body.pro_cate;
 
-    if(!token){
-        res.status(500).send({
-            message: "Token Error"
+    let decoded = jwt.verify(token);
+
+    let select_idxQuery;
+    let select_idxResult;
+    let insertQuery;
+    let insertResult;
+
+    if(decoded == -1) {
+        res.status (500).send({
+            message : "Internal server error"
         });
-    }else{
-        let decoded = jwt.verify(token);  
         console.log(decoded);
-        if ( decoded === -1) {
-            res.status(500).send({
-                message: "Token Error"
-            })
-        }else {
-            let user_interest = req.body.pro_cate;
-            let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
-            let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.email]); 
+        console.log(token);
+    }else{
+        if(decoded.identify ==0){
+            select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
+            select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
             let user_idx = select_idxResult[0].user_idx;
-            let insertQuery = "INSERT INTO interest (interest,user_idx) VALUES (?,?)";
-            for(let i = 0 ; i < user_interest.length; i++){
-                let insertResult = await db.queryParam_Arr(insertQuery, [user_interest[i],user_idx]);
+            insertQuery = "INSERT INTO interest (interest, user_idx) VALUES (?,?)";
+            for(let i = 0 ; i < interest.length; i++){
+                insertResult = await db.queryParam_Arr(insertQuery, [interest[i],user_idx]);
+                }
+        }else{
+            select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
+            select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
+            let sup_idx = select_idxResult[0].sup_idx;
+            insertQuery = "INSERT INTO interest (interest,sup_idx) VALUES (?,?)";
+            for(let i = 0 ; i < interest.length; i++){
+                insertResult = await db.queryParam_Arr(insertQuery, [interest[i],sup_idx]);
             }
-            if(!insertQuery){
-                res.status (500).send({
-                    message : "Internal server error"
-                })
-            }else if(user_interest.length <3){
-                res.status(400).send({
-                    message: "lack of information"
-                })
-            }else {
-                res.status(200).send({
-                    message : "Success"
-                })
-            }
+        }
+        if(!insertResult){ 
+            res.status (500).send({
+                message : "Internal server error"
+            });
+        }else if(interest.length <3){
+            res.status(400).send({
+                message: "lack of information"
+            });
+        }else {
+            res.status(200).send({
+                message : "Success to register"
+            });
         }
     }
 });
-
-
 module.exports = router;
