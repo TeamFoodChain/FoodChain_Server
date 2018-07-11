@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../../module/pool.js');
+const db = require('../../../../module/pool.js');
 
 router.post('/',async(req,res)=>{
   let phone = req.body.phone;
@@ -8,7 +8,7 @@ router.post('/',async(req,res)=>{
   if(!phone){
     res.status(400).send(
       {
-        message:"fail from client"
+        message:"Null Value"
       }
     );
   }else{
@@ -19,15 +19,15 @@ router.post('/',async(req,res)=>{
 
     if(!checkUserResult || !checkSupplierResult){
       res.status(500).send({
-        message:"fail signup from server"
+        message:"Internal Server Error"
   	  });
     }else if (checkUserResult.length === 1 || checkSupplierResult.length === 1){
       res.status(400).send({
-        message:"fail sign up from client, Already exists. - same phone"
+        message:"This phone number already exists."
       });
     }else{
-      res.status(201).send({
-         message:"success phone check"
+      res.status(200).send({
+         message:"Success phone number check"
       });
     }
   }

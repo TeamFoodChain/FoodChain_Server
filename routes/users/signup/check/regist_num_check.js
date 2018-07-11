@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../../module/pool.js');
+const db = require('../../../../module/pool.js');
 
 router.post('/',async(req,res)=>{
   let sup_regist_num = req.body.sup_regist_num;
@@ -8,7 +8,7 @@ router.post('/',async(req,res)=>{
   if(!sup_regist_num){
     res.status(400).send(
       {
-        message:"fail from client"
+        message:"Null Value"
       }
     );
   }else{
@@ -17,15 +17,15 @@ router.post('/',async(req,res)=>{
 
     if(!checkResult){
       res.status(500).send({
-        message:"fail signup from server"
+        message:"Internal Server Error"
   	  });
     }else if (checkResult.length === 1){
       res.status(400).send({
-        message:"fail sign up from client, Already exists. - same sup_regist_num"
+        message:"This sup_regist_num already exists."
       });
     }else{
-      res.status(201).send({
-         message:"success sup_regist_num check"
+      res.status(200).send({
+         message:"Success sup_regist_num check"
       });
     }
   }

@@ -8,17 +8,17 @@ router.post('/',async(req,res)=>{
   if(!pw || !pw_check){
     res.status(400).send(
       {
-        message:"fail from client"
+        message:"Null Value"
       }
     );
   }else{
     if (pw === pw_check){
-      res.status(201).send({
-         message:"success password check"
+      res.status(200).send({
+         message:"Success password check"
       });
     }else{
-      res.status(500).send({
-         message:"password is not matching."
+      res.status(400).send({
+         message:"Password is not matching."
       });
     }
   }

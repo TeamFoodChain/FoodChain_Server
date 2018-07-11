@@ -13,7 +13,7 @@ router.get('/', (req, res, next) => {
 router.use('/email', emailRouter);
 router.use('/phone', phoneRouter);
 router.use('/pw', passwordRouter);
-router.use('/registNum', registNumRouter);
+router.use('/regist', registNumRouter);
 
 
 module.exports = router;
