@@ -1,17 +1,15 @@
-const jwt = require('./jwt.js');
+const jwt = require('../module/jwt.js');
 const async = require('async');
 const pool_async = require('../config/dbPool_async.js');
 
-
-// user인지 supplier인지 식별 후, 데이터 전달
-module.exports = function(token, callback){
+module.exports.auth = (token, callback) => {
 	let identify_data = {}; // user, supplier 식별 후 담을 데이터	
 
 	let decoded = jwt.verify(token);
 
 	// token verify
 	if (decoded == -1) {
-		callback("token err");
+		callback([400, "token err"]);
 		return ;
 	}
 
@@ -33,14 +31,14 @@ module.exports = function(token, callback){
 				if(data.length == 0){ // 해당 토큰이 없다 
 					connection.release();
 					console.log("Invalied User");
-					callback("Invalied User");
+					callback([400, "Invalied User"]);
 					return ; // return 시 err
 				}
 
 				if(!data) {
 					connection.release();
 					console.log("Internal Server Error");
-					callback("Internal Server Error");
+					callback([500, "Internal Server Error"]);
 					return ;
 				} else {
 
@@ -50,7 +48,7 @@ module.exports = function(token, callback){
 						} else {
 							connection.release();
 							console.log("Invalid token error");
-							callback("Invalid token error");
+							callback([400, "Invalid token error"]);
 							return ;
 						}
 
@@ -74,7 +72,7 @@ module.exports = function(token, callback){
 						} else {
 							connection.release();
 							console.log("Invalid token error");
-							callback("Invalid token error");
+							callback([400, "Invalid token error"]);
 							return ;
 						}
 							// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
@@ -92,7 +90,7 @@ module.exports = function(token, callback){
 					}
 					connection.release();
 				}
-				callback(0, identify_data); // err : 0 result : identify_data
+				callback(null, identify_data); // err : 0 result : identify_data
 
 	})();
 }
