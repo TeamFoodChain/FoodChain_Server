@@ -31,6 +31,7 @@ router.post('/',async(req, res) =>{
 				res.status(500).send({
 					message : "Internal Server Error"
 				});
+				console.log("check query error : ", checkResult);
 			}else if(checkResult.length === 1){ // user_id에 해당하는 row가 있을 때 
 				let hashedpw = await crypto.pbkdf2(user_pw,checkResult[0].user_salt, 100000,32,'sha512');
 	
@@ -40,20 +41,21 @@ router.post('/',async(req, res) =>{
 					insertResult = await db.queryParam_Arr(insertQuery, [token, checkResult[0].user_idx]);
 					if (!insertResult) {
 						res.status(500).send({
-							message : "insert token fail"
+							message : "Internal Server Error"
 						});
+						console.log("insert token error : ", insertResult);
 					}else{
 						checkQuery = "SELECT interest FROM interest WHERE user_idx = ?";
 						checkResult = await db.queryParam_Arr(checkQuery, [checkResult[0].user_idx]);
 						if(checkResult == "" || checkResult == null || checkResult == undefined || ( checkResult != null && typeof checkResult == "object" && !Object.keys(checkResult).length)){
 							res.status(201).send({
-								message : "success siggin",
+								message : "Success signin",
 								token : token,
 								cate_flag : 0
 							});
 						}else{
 							res.status(201).send({
-								message : "success siggin",
+								message : "Success signin",
 								token : token,
 								cate_flag : 1
 							});
@@ -85,6 +87,7 @@ router.post('/',async(req, res) =>{
 				res.status(500).send({
 					message : "Internal Server Error"
 				});
+				console.log("check query error");
 			}else if(checkResult.length === 1) {// user_id에 해당하는 row가 있을 때 
 				let hashedpw = await crypto.pbkdf2(user_pw,checkResult[0].sup_pw_salt, 100000,32,'sha512');
 	
@@ -96,22 +99,23 @@ router.post('/',async(req, res) =>{
 					insertResult = await db.queryParam_Arr(insertQuery, [token, checkResult[0].sup_idx]);
 					if (!insertResult) {
 						res.status(500).send({
-							message : "insert token fail"
+							message : "Internal Server Error"
 						});
+						console.log("insert token error");
 					}else{
 						checkQuery = "SELECT interest FROM interest WHERE sup_idx = ?";
 						checkResult = await db.queryParam_Arr(checkQuery, [checkResult[0].sup_idx]);
 						if(checkResult == "" || checkResult == null || checkResult == undefined || ( checkResult != null && typeof checkResult == "object" && !Object.keys(checkResult).length)){
 							res.status(201).send({
-								message : "success siggin",
+								message : "Success signin",
 								token : token,
-								flag : 0
+								cate_flag : 0
 							});
 						}else{
 							res.status(201).send({
-								message : "success siggin",
+								message : "Success signin",
 								token : token,
-								flag : 1
+								cate_flag : 1
 							});
 						}
 					}
