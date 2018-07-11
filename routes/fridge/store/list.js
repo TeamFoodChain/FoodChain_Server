@@ -22,6 +22,14 @@ router.get('/', (req, res) => {
 					else resolve(result);
 				});
 			}).then(function(identify_data){
+				if(identify_data.identify == 0){
+					console.log("Access denied");
+					res.status(400).send({
+						message : "Access denied"
+					});
+					callback("Access denied");
+					return;
+				}
 				callback(null, identify_data);
 			}).catch(function(err){
 				res.status(500).send({
@@ -59,7 +67,7 @@ router.get('/', (req, res) => {
 		(async function(){
 			let connections = await pool_async.getConnection();
 			for(let i = 0 ; i < product.length ; i++){
-				let result = await pool_async.query(getProductImageQuery, product[i].pro_idx);
+				let result = await connections.query(getProductImageQuery, product[i].pro_idx);
 				if(result[0].length != 0){
 					let img = result[0]
 					product[i].pro_img = img[0].pro_img;

@@ -27,6 +27,8 @@ router.get('/', (req, res) => {
 router.post('/', upload.array('pro_img'), (req, res) => {
 	let token = req.headers.token;
 
+	let mar_idx;
+
 	let pro_idx = req.body.pro_idx;
 
 	let pro_name = req.body.pro_name;
@@ -41,6 +43,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 	let pro_image = [];
 
 	let pro_regist_date = moment().format("YYYY-MM-DD HH:mm:ss");
+
 
 	// 상품의 카테고리, 이름, 유통기한의 값이 없는 경우
 	if(!pro_name || !pro_cate || !pro_ex_date || !pro_price || !pro_sale_price || !pro_origin || !pro_istimesale || !pro_deadline){
@@ -70,6 +73,14 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					else resolve(result);
 				});
 			}).then(function(identify_data){
+				if(identify_data.identify == 0){
+					console.log("Access denied");
+					res.status(400).send({
+						message : "Access denied"
+					});
+					callback("Access denied");
+					return;
+				}
 				callback(null, identify_data);
 			}).catch(function(err){
 				res.status(500).send({
@@ -92,7 +103,23 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				}
 			});
 		},
-		// 3. s3에 이미지 등록
+		// 3. mar_idx 값 가져오기
+		function(connection, identify_data, callback){
+			let getMar_idxQuery = "SELECT mar_idx FROM supplier WHERE sup_idx = ?";
+			connection.query(getMar_idxQuery, identify_data.idx, function(err, result){
+				if(err) {
+					res.status(500).send({
+						message : "Internal Server Error"
+					});
+					callback("connection.query Error : " + err);
+					connection.release();
+				} else {
+					mar_idx = result[0].mar_idx;
+					callback(null, connection, identify_data);
+				}
+			});
+		},
+		// 4. s3에 이미지 등록
 		function(connection, identify_data, callback){
 			if(req.files){ // 이미지 db, s3에 저장
 				console.log(req.files);
@@ -108,10 +135,10 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				})();
 			} 
 		},
-		// 3. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
+		// 5. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
 		function(connection, identify_data, callback){
 			let insertProductQuery = "INSERT INTO product (pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin, pro_istimesale, pro_deadline) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-			connection.query(insertProductQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, 1, pro_origin, pro_istimesale, pro_deadline], function(err, result){
+			connection.query(insertProductQuery, [pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx,  pro_origin, pro_istimesale, pro_deadline], function(err, result){
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
@@ -123,7 +150,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				}
 			});
 		},
-		// 4. 방금 추가한 상품의 index값 얻어오기
+		// 6. 방금 추가한 상품의 index값 얻어오기
 		function(connection, identify_data, callback){
 			let getProductIdxQuery = "SELECT LAST_INSERT_ID() as pro_idx";
 			connection.query(getProductIdxQuery, function(err, result){
@@ -140,7 +167,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 		},
 
 
-		// 5. image는 테이블이 따로 있으므로 3에서 구한 pro_idx값을 이용해서 따로 저장해 준다.
+		// 7. image는 테이블이 따로 있으므로 3에서 구한 pro_idx값을 이용해서 따로 저장해 준다.
 		function(connection, identify_data, result, callback){
 			let insertProductImageQuery = "INSERT INTO product_image (pro_idx, pro_img) VALUES(?, ?)";
 			for(let i = 0 ; i < pro_image.length ; i++){
@@ -157,7 +184,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 			}
 			callback(null, connection, identify_data, result);
 		},
-		// 6. sell_list에 추가해 준다.
+		// 8. sell_list에 추가해 준다.
 		function(connection, identify_data, result, callback){
 			let insertSell_ListImageQuery = "INSERT INTO sell_list (sup_idx, pro_idx) VALUES(?, ?)";
 			connection.query(insertSell_ListImageQuery, [identify_data.idx, result.pro_idx], function(err, result){
@@ -168,7 +195,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					callback("connection.query Error : " + err);
 					connection.release();
 				}  else{
-					callback(null, "Success to register product");
+					callback(null, "Success to upload product");
 				connection.release();
 				}
 			});
@@ -179,7 +206,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-					message : "Success to register product"
+					message : "Success to upload product"
 				});
 				console.log(result);
 			}
@@ -221,9 +248,9 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 
 			// 3. 수정사항 등록
 			function(connection, callback){
-				let UpdateProductQuery = "UPDATE product SET pro_name = ?, pro_cate = ?, pro_ex_date = ?, pro_info = ? , pro_price = ?, pro_sale_price = ?, pro_origin = ?, pro_istimesale = ?, pro_deadline = ? WHERE pro_idx = ?";
+				let UpdateProductQuery = "UPDATE product SET pro_name = ?, pro_cate = ?, pro_ex_date = ?, pro_regist_date = ?, pro_info = ? , pro_price = ?, pro_sale_price = ?, pro_origin = ?, pro_istimesale = ?, pro_deadline = ? WHERE pro_idx = ?";
 
-				connection.query(UpdateProductQuery, [pro_name, pro_cate, pro_ex_date, pro_info, pro_price, pro_sale_price, pro_origin, pro_istimesale, pro_deadline, pro_idx], function(err, result){
+				connection.query(UpdateProductQuery, [pro_name, pro_cate, pro_ex_date, pro_regist_date, pro_info, pro_price, pro_sale_price, pro_origin, pro_istimesale, pro_deadline, pro_idx], function(err, result){
 					if(err) {
 						res.status(500).send({
 							message : "Internal Server Error"

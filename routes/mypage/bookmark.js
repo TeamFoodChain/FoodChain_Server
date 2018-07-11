@@ -40,6 +40,7 @@ router.get('/', (req, res) => {
 					res.status(500).send({
 						message: "Internal Server Error"
 					}); 
+					connection.release();
 					callback("pool.getConnection Error : " + err);
 				} else {
 					callback(null, connection, identify_data);
@@ -55,6 +56,7 @@ router.get('/', (req, res) => {
 					res.status(500).send({
 						message : "Internal Server Error"
 					});
+					connection.release();
 					callback("connection.query Error : " + err);
 				}
 				if(result.length == 0){
@@ -64,8 +66,8 @@ router.get('/', (req, res) => {
 					callback("No data");
 					return;
 				}
+				connection.release();
 				callback(null, result);
-				connection.release(); 
 			});
 		},
 		// 4. 받아온 pro_idx로 북마크 정보를 조회한다.
@@ -100,8 +102,8 @@ router.get('/', (req, res) => {
 					} 
 				}
 
-				callback(null, pro_idx);
 				connection.release();
+				callback(null, pro_idx);
 			})();
 		},
 
@@ -132,8 +134,8 @@ router.get('/', (req, res) => {
 						bookmark_info[i].product.pro_img = product_image.slice(0);
 					}
 				}
-				callback(null, "Success to load");
 				connection.release();
+				callback(null, "Success to load");
 			})();
 		}
 		];
@@ -146,6 +148,149 @@ router.get('/', (req, res) => {
 		});
 	});
 
+router.post('/', (req, res) =>{
+	let token = req.headers.token;
+	let pro_idx = req.body.pro_idx;
 
+
+	let taskArray = [
+	// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
+		function(callback){
+			return new Promise((resolve, reject)=>{
+				identifier(token, function(err, result){
+					if(err) reject(err);
+					else resolve(result);
+				});
+			}).then(function(identify_data){
+				callback(null, identify_data);
+			}).catch(function(err){
+				res.status(500).send({
+					message : err
+				});
+				return ;
+				console.log(err);
+			});
+		},
+
+		// 2. pool에서 connection 하나 가져오기
+		function(identify_data, callback) {
+			pool.getConnection(function(err, connection) {
+				if (err) {
+					res.status(500).send({
+						message: "Internal Server Error"
+					}); 
+					connection.release();
+					callback("pool.getConnection Error : " + err);
+				} else {
+					callback(null, connection, identify_data);
+				}
+			});
+		},
+		// 3. 북마크 등록
+		function(connection, identify_data, callback){
+			let insertBookmarkQuery = "";
+			if(identify_data.identify == 0)
+				insertBookmarkQuery = "INSERT INTO bookmark (user_idx, pro_idx) VALUES(?, ?)";
+			else
+				insertBookmarkQuery = "INSERT INTO bookmark (sup_idx, pro_idx) VALUES(?, ?)";
+
+			connection.query(insertBookmarkQuery, [identify_data.idx, pro_idx], function(err, result){
+				if(err) {
+					res.status(500).send({
+						message : "Internal Server Error"
+					});
+					connection.release();
+					callback("connection.query Error : " + err);
+				} else{
+					callback(null, result);
+					connection.release(); 
+				}
+			});
+		}
+		];
+		async.waterfall(taskArray, function(err, result){
+			if(err){
+				console.log(err);
+			} else {
+				res.status(200).send({
+					message : "Success to register"
+				});
+			}
+		});
+
+});
+
+router.delete('/', (req, res) =>{
+	let token = req.headers.token;
+	let pro_idx = req.body.pro_idx;
+
+
+	let taskArray = [
+	// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
+		function(callback){
+			return new Promise((resolve, reject)=>{
+				identifier(token, function(err, result){
+					if(err) reject(err);
+					else resolve(result);
+				});
+			}).then(function(identify_data){
+				callback(null, identify_data);
+			}).catch(function(err){
+				res.status(500).send({
+					message : err
+				});
+				return ;
+				console.log(err);
+			});
+		},
+
+		// 2. pool에서 connection 하나 가져오기
+		function(identify_data, callback) {
+			pool.getConnection(function(err, connection) {
+				if (err) {
+					res.status(500).send({
+						message: "Internal Server Error"
+					}); 
+					connection.release();
+					callback("pool.getConnection Error : " + err);
+				} else {
+					callback(null, connection, identify_data);
+				}
+			});
+		},
+		// 3. 북마크 등록
+		function(connection, identify_data, callback){
+			let deleteBookmarkQuery = "";
+			if(identify_data.identify == 0)
+				deleteBookmarkQuery = "DELETE FROM bookmark WHERE user_idx = ? AND pro_idx =?";
+			else
+				deleteBookmarkQuery = "DELETE FROM bookmark WHERE sup_idx = ? AND pro_idx =?";
+
+
+			connection.query(deleteBookmarkQuery, [identify_data.idx, pro_idx], function(err, result){
+				if(err) {
+					res.status(500).send({
+						message : "Internal Server Error"
+					});
+					connection.release();
+					callback("connection.query Error : " + err);
+				} else{
+					connection.release();
+					callback(null, result);
+				}
+			});
+		}
+		];
+		async.waterfall(taskArray, function(err, result){
+			if(err){
+				console.log(err);
+			} else {
+				res.status(200).send({
+					message : "Success to delete"
+				});
+			}
+		});
+
+});
 
 module.exports = router;

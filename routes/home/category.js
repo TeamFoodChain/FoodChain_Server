@@ -188,7 +188,7 @@ router.get('/', (req, res) => {
 					});
 				}
 
-				callback(null, "Success to load");
+				callback(null, "Success to get data");
 				connection.release();
 			})();
 		}
@@ -199,12 +199,11 @@ router.get('/', (req, res) => {
 		if(err){
 			console.log(err);
 		} else {
-			console.log("res");
 			res.status(200).send({
-				message : "success",
+				message : "success to get data",
 				data : saleProduct_info
 			});
-			//console.log(result);
+			console.log(result);
 		}
 	});	
 
