@@ -34,36 +34,28 @@ router.post('/',async(req,res)=>{
         message:"fail from server - insert into market error"
       });
     }else{
-      let selectQuery = 'SELECT mar_idx FROM market WHERE mar_name = ? && mar_locate_lat = ? && mar_locate_long = ? && mar_addr = ?';
-      let selectResult = await db.queryParam_Arr(selectQuery,[mar_name,mar_locate_lat,mar_locate_long,mar_addr]);
-      mar_idx = selectResult[0].mar_idx;
-      
-      if (!selectResult) {
+      mar_idx = insertMarketResult.insertId;
+
+      const salt = await crypto.randomBytes(32);
+      const hashedpw = await crypto.pbkdf2(sup_pw,salt.toString('base64'),100000,32,'sha512');
+
+      if(!sup_id){
+        insertQuery = 'INSERT INTO supplier (sup_name,sup_email,sup_phone,sup_regist_num,sup_pw,sup_pw_salt,mar_idx) VALUES (?,?,?,?,?,?,?)';
+        insertResult = await db.queryParam_Arr(insertQuery,[sup_name,sup_email,sup_phone,sup_regist_num,hashedpw.toString('base64'),salt.toString('base64'),mar_idx]);
+      } else {
+        insertQuery = 'INSERT INTO supplier (sup_name,sup_email,sup_phone,sup_regist_num,sup_id,sup_pw,sup_pw_salt,mar_idx) VALUES (?,?,?,?,?,?,?,?)';
+        insertResult = await db.queryParam_Arr(insertQuery,[sup_name,sup_email,sup_phone,sup_regist_num,sup_id,hashedpw.toString('base64'),salt.toString('base64'),mar_idx]);
+      }
+      if(!insertResult){
         res.status(500).send({
-          message:"fail from server - get market_idx error"
+          message:"fail from server - insert into supplier error",
+          data:sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx
         });
       }else{
-        const salt = await crypto.randomBytes(32);
-        const hashedpw = await crypto.pbkdf2(sup_pw,salt.toString('base64'),100000,32,'sha512');
-
-        if(!sup_id){
-          insertQuery = 'INSERT INTO supplier (sup_name,sup_email,sup_phone,sup_regist_num,sup_pw,sup_pw_salt,mar_idx) VALUES (?,?,?,?,?,?,?)';
-          insertResult = await db.queryParam_Arr(insertQuery,[sup_name,sup_email,sup_phone,sup_regist_num,hashedpw.toString('base64'),salt.toString('base64'),selectResult[0].mar_idx]);
-        } else {
-          insertQuery = 'INSERT INTO supplier (sup_name,sup_email,sup_phone,sup_regist_num,sup_id,sup_pw,sup_pw_salt,mar_idx) VALUES (?,?,?,?,?,?,?,?)';
-          insertResult = await db.queryParam_Arr(insertQuery,[sup_name,sup_email,sup_phone,sup_regist_num,sup_id,hashedpw.toString('base64'),salt.toString('base64'),selectResult[0].mar_idx]);
-        }
-        if(!insertResult){
-          res.status(500).send({
-            message:"fail from server - insert into supplier error",
-            data:sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx
-          });
-        }else{
-          res.status(201).send({
-            message:"success signup",
-            identify:"1"
-          });
-        }
+        res.status(201).send({
+          message:"success signup",
+          identify:"1"
+        });
       }
     }
   }
