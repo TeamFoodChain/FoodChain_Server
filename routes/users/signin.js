@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const crypto = require('crypto-promise');
 const db = require('../../module/pool.js');
 const jwt = require('../../module/jwt.js');
@@ -41,14 +40,24 @@ router.post('/',async(req, res) =>{
 					insertResult = await db.queryParam_Arr(insertQuery, [token, checkResult[0].user_idx]);
 					if (!insertResult) {
 						res.status(500).send({
-							message : "insert token fail",
-							token : token
+							message : "insert token fail"
 						});
 					}else{
-						res.status(201).send({
-							message : "success siggin",
-							token : token
-						});
+						checkQuery = "SELECT interest FROM interest WHERE user_idx = ?";
+						checkResult = await db.queryParam_Arr(checkQuery, [checkResult[0].user_idx]);
+						if(checkResult == "" || checkResult == null || checkResult == undefined || ( checkResult != null && typeof checkResult == "object" && !Object.keys(checkResult).length)){
+							res.status(201).send({
+								message : "success siggin",
+								token : token,
+								cate_flag : 0
+							});
+						}else{
+							res.status(201).send({
+								message : "success siggin",
+								token : token,
+								cate_flag : 1
+							});
+						}
 					}
 				}else{
 					console.log("hashedpw : " + hashedpw.toString('base64'));
@@ -87,14 +96,24 @@ router.post('/',async(req, res) =>{
 					insertResult = await db.queryParam_Arr(insertQuery, [token, checkResult[0].sup_idx]);
 					if (!insertResult) {
 						res.status(500).send({
-							message : "insert token fail",
-							token : token
+							message : "insert token fail"
 						});
 					}else{
-						res.status(201).send({
-							message : "success siggin",
-							token : token
-						});
+						checkQuery = "SELECT interest FROM interest WHERE sup_idx = ?";
+						checkResult = await db.queryParam_Arr(checkQuery, [checkResult[0].sup_idx]);
+						if(checkResult == "" || checkResult == null || checkResult == undefined || ( checkResult != null && typeof checkResult == "object" && !Object.keys(checkResult).length)){
+							res.status(201).send({
+								message : "success siggin",
+								token : token,
+								flag : 0
+							});
+						}else{
+							res.status(201).send({
+								message : "success siggin",
+								token : token,
+								flag : 1
+							});
+						}
 					}
 				}else{
 					console.log("hashedpw : " + hashedpw.toString('base64'));

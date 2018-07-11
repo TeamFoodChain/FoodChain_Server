@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto-promise');
 const db = require('../../../module/pool.js');
+const jwt = require('../../../module/jwt.js');
 
 router.post('/',async(req,res)=>{
   let sup_name = req.body.sup_name;
@@ -18,6 +19,7 @@ router.post('/',async(req,res)=>{
   let mar_idx;
   let insertQuery;
   let insertResult;
+	let token;
 
   if(!sup_name || !sup_email || !sup_phone || !sup_regist_num || !sup_pw || !mar_name || !mar_locate_lat || !mar_locate_long || !mar_addr){
     res.status(400).send(
@@ -52,10 +54,20 @@ router.post('/',async(req,res)=>{
           data:sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx
         });
       }else{
-        res.status(201).send({
-          message:"success signup",
-          identify:"1"
-        });
+        token = jwt.sign(sup_email, sup_pw, 1);
+        if(!token){
+          res.status(500).send({
+            message:"Internal Server Error"
+          });
+          console.log("Token Error : ", token);
+        }else{
+          res.status(200).send({
+            message : "success signup",
+            token : token,
+            identify : 1,
+            cate_flag : 0
+          });
+        }
       }
     }
   }
