@@ -16,10 +16,9 @@ router.post('/',async(req,res)=>{
   if(!user_pw || !user_name || !user_email || !user_phone){
     res.status(400).send(
       {
-        message:"Null Value"
+        message:"fail from client"
       }
     );
-    console.log(user_pw, user_name, user_email, user_phone);
   }else{
     const salt = await crypto.randomBytes(32);
     const hashedpw = await crypto.pbkdf2(user_pw,salt.toString('base64'),100000,32,'sha512');
@@ -33,12 +32,11 @@ router.post('/',async(req,res)=>{
     }
     if(!insertResult){
       res.status(500).send({
-        message:"Internal Server Error"
+        message:"fail from server"
       });
-      console.log("insert into user error");
     }else{
       res.status(201).send({
-        message:"Success signup",
+        message:"success signup",
         identify:"0"
       });
     }

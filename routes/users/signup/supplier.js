@@ -22,7 +22,7 @@ router.post('/',async(req,res)=>{
   if(!sup_name || !sup_email || !sup_phone || !sup_regist_num || !sup_pw || !mar_name || !mar_locate_lat || !mar_locate_long || !mar_addr){
     res.status(400).send(
       {
-        message:"Null Value"
+        message:"fail from client"
       }
     );
   }else{
@@ -31,9 +31,8 @@ router.post('/',async(req,res)=>{
     
     if(!insertMarketResult){
       res.status(500).send({
-        message:"Internal Server Error"
+        message:"fail from server - insert into market error"
       });
-      console.log("insert into market error : " , sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx);
     }else{
       mar_idx = insertMarketResult.insertId;
 
@@ -49,12 +48,12 @@ router.post('/',async(req,res)=>{
       }
       if(!insertResult){
         res.status(500).send({
-          message:"Internal Server Error"
+          message:"fail from server - insert into supplier error",
+          data:sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx
         });
-        console.log("insert into supplier error : " , sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx)
       }else{
         res.status(201).send({
-          message:"Success signup",
+          message:"success signup",
           identify:"1"
         });
       }
