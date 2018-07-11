@@ -14,7 +14,7 @@ const pool = require('../../../config/dbPool.js');
 const pool_async = require('../../../config/dbPool_async.js');
 const secretKey = require('../../../config/secretKey.js').secret;
 const moment = require('moment');
-const upload = require('../../../config/s3multer.js');
+const s3 = require('../../../config/s3multer.js');
 const identifier = require('../../../module/token_identifier.js');
 
 router.get('/', (req, res, next) => {
@@ -25,7 +25,7 @@ router.get('/', (req, res, next) => {
 });
 
 // 최대 이미지 개수 미설정
-router.post('/', upload.array('image'), (req, res) => {
+router.post('/', s3.upload.array('image'), (req, res) => {
 	let token = req.headers.token;
 
 	let pro_name = req.body.pro_name;
