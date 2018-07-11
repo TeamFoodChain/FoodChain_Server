@@ -50,15 +50,15 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 		return ;
 	}
 
-	if(!pro_idx){ // pro_idx가 없을 때 (새로운 상품을 등록)
-		if(req.files){ // 이미지 db, s3에 저장
-			console.log(req.files);
-			// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
-			for(let i = 0 ; i < req.files.length ; i++){
-				pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
-				s3.upload(req.files[i]);
-			}
-		}
+	if(!pro_idx){
+	 // pro_idx가 없을 때 (새로운 상품을 등록)
+		// if(req.files){ // 이미지 db, s3에 저장
+		// 	// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
+		// 	for(let i = 0 ; i < req.files.length ; i++){
+		// 		pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
+		// 		s3.upload(req.files[i]);
+		// 	}
+		// }
 
 
 	let taskArray = [
@@ -91,6 +91,22 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					callback(null, connection, identify_data);
 				}
 			});
+		},
+		// 3. s3에 이미지 등록
+		function(connection, identify_data, callback){
+			if(req.files){ // 이미지 db, s3에 저장
+				console.log(req.files);
+			// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
+				for(let i = 0 ; i < req.files.length ; i++){
+					pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
+					//s3.upload(req.files[i]);
+				}
+				(async function(){
+					let result = await s3.upload(req.files);
+					console.log(result);
+						callback(null, connection, identify_data);
+				})();
+			} 
 		},
 		// 3. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
 		function(connection, identify_data, callback){

@@ -89,119 +89,74 @@ router.get('/', (req, res) =>{
 			let getProductDataQuery = "SELECT * FROM product WHERE mar_idx = ? AND pro_issell = 0 AND pro_istimesale = 0 ORDER BY pro_regist_date DESC";
 			let cnt = 0; // null인 값을 피하기 위해 cnt로 count한다.
 			console.log(mar_idx);
+
 			(async function(){
-				let connections = await pool_async.getConnection();
+				let connection = await pool_async.getConnection();
+				for(let i = 0 ; i < mar_idx.length ; i++){
+					let result = await connection.query(getProductDataQuery, mar_idx[i]);
+					let data = result[0];
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(mar_idx);
-					});
-				}
-
-				let makeReserve = function(i, mar_idx){
-					reserve(async function(mar_idx){
-						let result = await pool_async.query(getProductDataQuery, mar_idx[i]);
-						let data = result[0];
-						//console.log(data);
-						return new Promise((resolve, reject)=>{
-							resolve();
-							if(data.length!=0){
-							product = {};
-							product.pro_idx = data[0].pro_idx;
-							product.pro_name = data[0].pro_name;
-							product.pro_price = data[0].pro_price;
-							product.pro_sale_price = data[0].pro_sale_price;
-							product.pro_ex_date = data[0].pro_ex_date;
-							product.pro_regist_date = data[0].pro_regist_date;
-							product.pro_info = data[0].pro_info;
-							product.pro_img = [];
-							product.mar_idx = mar_idx[i];
-							saleProduct_info[cnt] = {};
-							saleProduct_info[cnt] = product;
-							cnt++;
-						}
-						}).then(function(){
-							if(i + 1 == mar_idx.length){
-								end();
-								// console.log("end");
-								// callback(null, connections);
-								//console.log(saleProduct_info);
-							}
-
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
 						});
-						
+						connection.release();
+						callback("connection.query Error : " + err);
+					}
+					if(data.length!=0){
+						product = {};
+						product.pro_idx = data[0].pro_idx;
+						product.pro_name = data[0].pro_name;
+						product.pro_price = data[0].pro_price;
+						product.pro_sale_price = data[0].pro_sale_price;
+						product.pro_ex_date = data[0].pro_ex_date;
+						product.pro_regist_date = data[0].pro_regist_date;
+						product.pro_info = data[0].pro_info;
+						product.pro_img = [];
+						product.mar_idx = mar_idx[i];
+						saleProduct_info[cnt] = {};
+						saleProduct_info[cnt] = product;
+						cnt++;
+					}
 
-							
-					
-				});
-				}
-				// pro_idx 가 없으면 (상품이 없을 경우) 다음 단계 진행
-				if(mar_idx.length == 0){
-					callback(null, "No Data");
-					connections.release();
-					return; ///////////////////////////fdsfsdfsd
-				}
-				
-				for(var i = 0 ; i < mar_idx.length && i <20 ; i++){ // 최대 상품 개수 20개
-					makeReserve(i, mar_idx);
 				}
 
-				let end = function(){
-					callback(null, identify_data);
-					connections.release();
-				}
+				callback(null, identify_data);
+				connection.release();
 			})();
 		},
 		// 5. 상품 image 가져오기
 		function(identify_data, callback){
 			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
 
-				(async function(){
-				let connections = await pool_async.getConnection();
 
-				let reserve = function(cb){
-					process.nextTick(function(){
-						cb(saleProduct_info);
-					});
-				}
+			(async function(){
+				let connection = await pool_async.getConnection();
+				for(let i = 0 ; i < saleProduct_info.length ; i++){
+					let result = await connection.query(getProductImageQuery, saleProduct_info[i].pro_idx);
+					let data = result[0];
 
-				let makeReserve = function(i, pro_idx){
-					reserve(async function(pro_idx){
-						let value = pro_idx[i];
-						let result = await pool_async.query(getProductImageQuery, pro_idx[i].pro_idx);
-						let data = result[0];
-						if(data.length != 0){
-							product_image = [];
-							for(let j = 0 ; j < data.length ; j++){
-								product_image[j] = data[j].pro_img;
-							}
-							saleProduct_info[i].pro_img = product_image.slice(0);
-						}
-
-						if(i + 1 == pro_idx.length){
-						end();
-						
+					if(result === undefined){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						connection.release();
+						callback("connection.query Error : " + err);
 					}
-				});
-				}
-				//pro_idx가 없을 경우(상품이 없을 경우) 다음 단계 진행 (끝)
-				if(saleProduct_info.length == 0){
-					callback(null, "No data");
-					connections.release();
-					return;
+
+					if(data.length != 0){
+						product_image = [];
+						for(let j = 0 ; j < data.length ; j++){
+							product_image[j] = data[j].pro_img;
+						}
+						saleProduct_info[i].pro_img = product_image.slice(0);
+					}
+
 				}
 
-				for(var i = 0 ; i < saleProduct_info.length ; i++){
-					makeReserve(i, saleProduct_info);
-				}
-
-				let end = function(){
-					callback(null, identify_data);
-					connections.release();
-				}
+				callback(null, identify_data);
+				connection.release();
 			})();
-
-
 		},
 		// 6. 추천상품 가져오기 (사용자의 선택 카테고리를 거리순으로 추천)
 		function(identify_data, callback){
