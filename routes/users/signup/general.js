@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto-promise');
 const db = require('../../../module/pool.js');
+const jwt = require('../../../module/jwt.js');
 
 router.post('/',async(req,res)=>{
   let user_pw = req.body.user_pw;
@@ -12,6 +13,7 @@ router.post('/',async(req,res)=>{
 
   let insertQuery;
   let insertResult;
+	let token;
 
   if(!user_pw || !user_name || !user_email || !user_phone){
     res.status(400).send(
@@ -35,10 +37,20 @@ router.post('/',async(req,res)=>{
         message:"fail from server"
       });
     }else{
-      res.status(201).send({
-        message:"success signup",
-        identify:"0"
-      });
+      token = jwt.sign(user_email, user_pw, 0);
+      if(!token){
+        res.status(500).send({
+          message:"Internal Server Error"
+        });
+        console.log("Token Error : ", token);
+      }else{
+        res.status(200).send({
+          message : "success signup",
+          token : token,
+          identify : 0,
+          cate_flag : 0
+        });
+      }
     }
   }
 });
