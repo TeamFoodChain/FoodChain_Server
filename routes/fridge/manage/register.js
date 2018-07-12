@@ -15,7 +15,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
     let fri_name = req.body.fri_name;
     let fri_ex_date = req.body.fri_ex_date;
     let fri_info = req.body.fri_info;
-    let fri_regist_date = moment().format("YYYY-MM-DD HH:mm:ss");
+    let fri_regist_date = moment().format("YYYY-MM-DD");
 
     let fri_img = [];
 
