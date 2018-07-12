@@ -17,7 +17,7 @@ router.post('/',async(req,res)=>{
     if (!regExp.test(phone)){
       res.status(400).send(
         {
-          message:"Invalid data"
+          message:"Invalid Data"
         }
       );
     }else{
@@ -32,11 +32,11 @@ router.post('/',async(req,res)=>{
         });
       }else if (checkUserResult.length === 1 || checkSupplierResult.length === 1){
         res.status(400).send({
-          message:"This phone number already exists."
+          message:"This Phone Number Already Exists."
         });
       }else{
         res.status(200).send({
-          message:"Success phone number check"
+          message:"Success Phone Number Check"
         });
       }
     }

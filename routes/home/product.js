@@ -143,7 +143,7 @@ router.get('/', (req, res) => {
 						supplier_info.sup_others[i].pro_img = {};
 					}
 				}
-				callback(null, "success to get products");
+				callback(null, "Success to Get Data");
 			}
 			connection.release();
 		});
@@ -157,7 +157,7 @@ router.get('/', (req, res) => {
 			console.log(err);
 		} else {
 			res.status(200).send({
-				message : "success to get products",
+				message : "Success to Get Data",
 				product_info : product_info,
 				supplier_info : supplier_info
 			});

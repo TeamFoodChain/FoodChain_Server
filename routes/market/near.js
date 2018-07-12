@@ -51,10 +51,10 @@ router.get('/', (req, res) => {
 			connection.query(getMarketQuery, [identify_data.addr_lat, identify_data.addr_long], function(err, result){
 				if(result.length == 0){ // 해당 데이터가 없다 
 					res.status(200).send({
-						message : "No data"
+						message : "No Data"
 					});
 					connection.release();
-					callback("No data");
+					callback("No Data");
 					return;
 				}
 
@@ -78,7 +78,7 @@ router.get('/', (req, res) => {
 					nearData.addr_long = identify_data.addr_long;
 					nearData.markets = markets;
 					//user or sup data도 넣기
-					callback(null, "Success to GET");
+					callback(null, "Success to Get Data");
 					connection.release();
 				}
 			});
@@ -90,7 +90,7 @@ router.get('/', (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-						message : "Success to GET",
+						message : "Success to Get Data",
 						data : nearData
 					});
 				console.log(result);

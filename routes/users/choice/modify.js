@@ -18,7 +18,7 @@ router.put('/', async (req, res, next) => {
     console.log(decoded);
   if(decoded == -1) {                  
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
     }else{
         if(decoded.identify == 0){                                        //일반 사용자
@@ -27,7 +27,7 @@ router.put('/', async (req, res, next) => {
             let user_idx = select_idxResult[0].user_idx;
             if(!select_idxResult){
                 res.status(500).send({
-                    message: "Internal server error"
+                    message: "Internal Server Error"
                 });
 
             }else{
@@ -35,7 +35,7 @@ router.put('/', async (req, res, next) => {
                 deleteResult = await db.queryParam_Arr(deleteQuery,[user_idx]);
                 if(!deleteResult){
                     res.status(500).send({
-                        message: "Internal server error"
+                        message: "Internal Server Error"
                     });
                 }else{
                     insertQuery = "INSERT INTO interest (interest,user_idx) VALUES (?,?)";
@@ -48,7 +48,7 @@ router.put('/', async (req, res, next) => {
             let sup_idx = select_idxResult[0].sup_idx;
             if(!select_idxResult){
                 res.status(500).send({
-                    message: "Internal server error"
+                    message: "Internal Server Error"
                 });
             }else{
                 deleteQuery = "DELETE FROM interest WHERE sup_idx= ?";
@@ -56,7 +56,7 @@ router.put('/', async (req, res, next) => {
                 console.log("1",deleteResult);
                 if(!deleteResult){
                     res.status(500).send({
-                        message: "Internal server error"
+                        message: "Internal Server Error"
                     });
                 }else{
                     select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
@@ -68,15 +68,15 @@ router.put('/', async (req, res, next) => {
                 }}}             
                 if(!insertResult){
                     res.status (500).send({
-                        message : "Internal server error"
+                        message : "Internal Server Error"
                     });
                 }else if(interest.length <3){
                     res.status(400).send({
-                        message: "lack of information"
+                        message: "Lack of Information"
                     });
                 }else{
                     res.status(200).send({
-                        message : "Success to modify"
+                        message : "Success to Modify"
             });
         }
     }

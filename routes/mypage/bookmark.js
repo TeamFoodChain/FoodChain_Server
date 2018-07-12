@@ -135,7 +135,7 @@ router.get('/', (req, res) => {
 					}
 				}
 				connection.release();
-				callback(null, "Success to load");
+				callback(null, "Success to Get Data");
 			})();
 		}
 		];
@@ -152,7 +152,12 @@ router.post('/', (req, res) =>{
 	let token = req.headers.token;
 	let pro_idx = req.body.pro_idx;
 
-
+	if(!pro_idx){
+		res.status(400).send({
+			message : "Null Value"
+		});
+	}
+	
 	let taskArray = [
 	// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
 		function(callback){
@@ -213,7 +218,7 @@ router.post('/', (req, res) =>{
 				console.log(err);
 			} else {
 				res.status(200).send({
-					message : "Success to register"
+					message : "Success to Register Data"
 				});
 			}
 		});
@@ -224,7 +229,12 @@ router.delete('/', (req, res) =>{
 	let token = req.headers.token;
 	let pro_idx = req.body.pro_idx;
 
-
+	if(!pro_idx){
+		res.status(400).send({
+			message : "Null Value"
+		});
+	}
+	
 	let taskArray = [
 	// 1. token 유효성 검사, 해당 토큰에 대한 정보 반환
 		function(callback){
@@ -286,7 +296,7 @@ router.delete('/', (req, res) =>{
 				console.log(err);
 			} else {
 				res.status(200).send({
-					message : "Success to delete"
+					message : "Success to Delete Data"
 				});
 			}
 		});

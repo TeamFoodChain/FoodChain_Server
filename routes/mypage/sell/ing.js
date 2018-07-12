@@ -126,7 +126,7 @@ router.get('/', (req, res) => {
 						saleProduct_info[i].product.pro_img = product_image.slice(0);
 					}
 				}
-				callback(null, "Success to load");
+				callback(null, "Success to Get Data");
 				connection.release();
 			})();
 
@@ -138,7 +138,7 @@ router.get('/', (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-						message : "Success to load",
+						message : "Success to Get Data",
 						data : saleProduct_info
 					});
 				console.log(result);
@@ -266,9 +266,9 @@ router.put('/', (req, res) => {
           callback("connection.query Error : " + err);
         } else {
           res.status(200).send({
-            message: "Success to alter data"
+            message: "Success to Modify Data"
           });
-          callback(null, "Success to alter data");
+          callback(null, "Success to Modify Data");
         }
         connection.release(); // connection 반환
 		});

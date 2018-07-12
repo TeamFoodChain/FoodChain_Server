@@ -60,7 +60,7 @@ router.get('/',async (req,res,next)=> {
 
     if(decoded == -1) {
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
     }else{
         if(decoded.identify == 0){
@@ -95,7 +95,6 @@ router.get('/',async (req,res,next)=> {
                 res.status(500).send({
                     message : "Internal Server Error"
                 }); 
-
             }else if (result.length === 0){
                 res.status(400).send({
                     message:"No Data"
@@ -123,7 +122,7 @@ router.delete('/',async (req,res,next)=>{
 
     if(decoded == -1) {
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
 
     }else{
@@ -147,7 +146,7 @@ router.delete('/',async (req,res,next)=>{
                 })
             }else{
                 res.status(200).send({
-                    message : "Succsss to delete"
+                    message : "Succsss to Delete"
                 })
             }}
         });

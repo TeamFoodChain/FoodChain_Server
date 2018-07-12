@@ -24,7 +24,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
 
     if(!fri_cate || !fri_name || !fri_ex_date || !fri_info || !token || !fri_regist_date){
         res.status(400).send({
-            message : "Value Error : Fail from client"
+            message : "Null Value"
         });
         console.log(fri_cate, fri_name, fri_ex_date, fri_info, token, fri_regist_date);
     }else{    
@@ -33,7 +33,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
         if(!fri_item_idx) {
             if(decoded == -1){
                 res.status(400).send({
-                    message : "Value Error : Fail from client"
+                    message : "Tokne Error"
                 });
             }else{
                 let selectQuery = "SELECT user_idx FROM user WHERE user_email= ?";
@@ -42,7 +42,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                 
                 if(!selectResult){
                     res.status(400).send({
-                        message : "Value Error : Fail from client"
+                        message : "Internal Server Error"
                     });
                 }else{
                     if(req.files){ // 이미지 db, s3에 저장
@@ -60,7 +60,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                     
                     if (!registerResult){ 
                         res.status(500).send({
-                            message : "Register Error"
+                            message : "Internal Server Error"
                         });
                     }else{
                         registerQuery = "INSERT INTO fridge (user_idx, fri_item_idx) VALUES (?, ?)";
@@ -68,7 +68,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                         
                         if (!registerResult){
                             res.status(400).send({
-                                message : "fri_item insert Error"
+                                message : "Internal Server Error"
                             });
                         }else{
                             registerQuery = "INSERT INTO fridge_item_image (fri_item_idx, fri_img) VALUES (?, ?)";
@@ -80,7 +80,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                                     });
                                 }else{
                                     res.status(200).send({
-                                        message : "Success to upload Data"
+                                        message : "Success to Upload Data"
                                     });
                                 }
                             }
@@ -93,14 +93,14 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
             let UpdateFriItemResult = await db.queryParam_Arr(UpdateFriItemQuery, [fri_cate, fri_name, fri_ex_date, fri_info, fri_item_idx]);
             if(!UpdateFriItemResult){
                 res.status(500).send({
-                    message : "Internal server error"
+                    message : "Internal Server Error"
                 });
             }else{
                 let getFriItemImageQuery = "SELECT fri_img FROM fridge_item_image WHERE fri_item_idx = ?";	
                 let getFriItemImageResult = await db.queryParam_Arr(getFriItemImageQuery, [fri_item_idx]);
                 if(!getFriItemImageResult){
                     res.status(500).send({
-                        message : "Internal server error"
+                        message : "Internal Server Error"
                     });
                 }else{
                     if(getFriItemImageResult.length != 0){
@@ -114,7 +114,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                     let DeleteFriItemImageResult = await db.queryParam_Arr(DeleteFriItemImageQuery, [fri_item_idx]);
                     if(!DeleteFriItemImageResult){
                         res.status(500).send({
-                            message : "Internal server error"
+                            message : "Internal Server Error"
                         });
                     }else{
                         if(fri_img.length == 0){
@@ -142,7 +142,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                                     });
                                 }else{
                                     res.status(200).send({
-                                        message : "Success to modify Data"
+                                        message : "Success to Modify Data"
                                     });
                                 }
                             }
@@ -164,14 +164,14 @@ router.delete('/', async (req, res)=>{
     
     if( !fri_item_idx || !token) {
         res.status(400).send({
-            message : "Value Error - Fail from client"
+            message : "Null Value"
         });
     }else{    
         let decoded = jwt.verify(token);
         
         if(decoded == -1){
             res.status(400).send({
-                message : "Value Error - Fail from client"
+                message : "Token Error"
             });
         }else{
             checkQuery = "SELECT fri_img FROM fridge_item_image WHERE fri_item_idx = ?";
@@ -194,14 +194,14 @@ router.delete('/', async (req, res)=>{
                 let deleteResult = await db.queryParam_Arr(deleteQuery, [identify_data.idx, fri_item_idx]);
                 if (!deleteResult){ 
                     res.status(500).send({
-                        message : "Fridge Delete Error"
+                        message : "Internal Server Error"
                     });
                 }else{
                     let deleteQuery = "DELETE FROM fridge_item WHERE fri_item_idx = ?";
                     let deleteResult = await db.queryParam_Arr(deleteQuery, [fri_item_idx]);
                     if (!deleteResult){ 
                         res.status(500).send({
-                            message : "Fridge item Delete Error"
+                            message : "Internal Server Error"
                         });
                     }else{
                         let deleteQuery = "DELETE FROM fridge_item_image WHERE fri_item_idx = ?";
@@ -217,7 +217,7 @@ router.delete('/', async (req, res)=>{
                                     s3.delete(fri_img);
                                 }
                                 res.status(200).send({
-                                    message : "Success to upload Data"
+                                    message : "Success to Delete Data"
                                 });
                             }
                         }

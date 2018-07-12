@@ -17,7 +17,7 @@ router.post('/',async(req,res)=>{
     if (!regExp.test(email)){
       res.status(400).send(
         {
-          message:"Invalid data"
+          message : "Invalid Data"
         }
       );
     }else{
@@ -32,11 +32,11 @@ router.post('/',async(req,res)=>{
         });
       }else if (checkUserResult.length === 1 || checkSupplierResult.length === 1){
         res.status(400).send({
-          message:"This email already exists."
+          message:"This Email Already Exists."
         });
       }else{
         res.status(200).send({
-          message:"Success email check"
+          message:"Success Email Check"
         });
       }
     }

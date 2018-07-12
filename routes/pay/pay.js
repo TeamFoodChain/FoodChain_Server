@@ -76,9 +76,9 @@ router.post('/', (req, res) => {
 				} else{
 					if(result.length != 0){ // 반환 값의 길이가 0 일때 (테이블이 비어서 반환 값이 null일 때)
 						res.status(500).send({
-							message : "Already saled!"
+							message : "Already Saled"
 						});
-						callback("Already saled!");
+						callback("Already Saled");
 						connection.release();
 					} else{
 						callback(null, connection, identify_data);
@@ -126,7 +126,7 @@ router.post('/', (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-					message : "Success to buy product"
+					message : "Success to Buy Product"
 				});
 				console.log(result);
 			}

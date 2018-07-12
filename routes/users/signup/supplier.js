@@ -24,17 +24,20 @@ router.post('/',async(req,res)=>{
   if(!sup_name || !sup_email || !sup_phone || !sup_regist_num || !sup_pw || !mar_name || !mar_locate_lat || !mar_locate_long || !mar_addr){
     res.status(400).send(
       {
-        message:"fail from client"
+        message:"Null Value"
       }
     );
+    return ;
   }else{
     let insertMarketQuery = 'INSERT INTO market (mar_name,mar_locate_lat,mar_locate_long,mar_addr) VALUES (?,?,?,?)';
     let insertMarketResult = await db.queryParam_Arr(insertMarketQuery,[mar_name,mar_locate_lat,mar_locate_long,mar_addr]);
     
     if(!insertMarketResult){
       res.status(500).send({
-        message:"fail from server - insert into market error"
+        message : "Internal Server Error"
       });
+      console.log("fail from server - insert into market error");
+      return ;
     }else{
       mar_idx = insertMarketResult.insertId;
 
@@ -50,10 +53,11 @@ router.post('/',async(req,res)=>{
       }
       if(!insertResult){
         res.status(500).send({
-          message:"insert into supplier error",
+          message:"Internal Server Error",
           data:sup_name, sup_email, sup_phone, sup_regist_num, sup_id, mar_idx
         });
-        console.log("insert into supplier error");
+        return ;
+        console.log("fail from server - insert into supplier error");
       }else{
         token = jwt.sign(sup_email, sup_pw, 1);
         if(!token){
@@ -63,7 +67,7 @@ router.post('/',async(req,res)=>{
           console.log("Token Error : ", token);
         }else{
           res.status(200).send({
-            message : "success signup",
+            message : "Success Signup",
             token : token,
             identify : 1,
             cate_flag : 0

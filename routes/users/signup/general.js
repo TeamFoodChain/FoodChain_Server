@@ -18,9 +18,10 @@ router.post('/',async(req,res)=>{
   if(!user_pw || !user_name || !user_email || !user_phone){
     res.status(400).send(
       {
-        message:"fail from client"
+        message : "Null Value"
       }
     );
+    return ;
   }else{
     const salt = await crypto.randomBytes(32);
     const hashedpw = await crypto.pbkdf2(user_pw,salt.toString('base64'),100000,32,'sha512');
@@ -34,9 +35,8 @@ router.post('/',async(req,res)=>{
     }
     if(!insertResult){
       res.status(500).send({
-        message:"fail from server"
+        message:"Internal Server Error"
       });
-      console.log("insert query Error : ", insertResult);
     }else{
       token = jwt.sign(user_email, user_pw, 0);
       if(!token){
@@ -44,13 +44,14 @@ router.post('/',async(req,res)=>{
           message:"Internal Server Error"
         });
         console.log("Token Error : ", token);
+        return ;
       }else{
         res.status(200).send({
-          message : "success signup",
+          message : "Success Signup",
           token : token,
-          identify : 0,
           cate_flag : 0
         });
+        return ;
       }
     }
   }
