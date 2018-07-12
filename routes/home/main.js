@@ -61,6 +61,28 @@ router.get('/', (req, res) =>{
 		// 3. 주변 마켓 정보 검색 쿼리 다시 생각할 것
 		function(connection, identify_data, callback){
 			let getMarketQuery = "SELECT * FROM market WHERE abs(? - mar_locate_lat) <= 0.009 AND abs(? - mar_locate_long) <= 0.0114";
+			if(identify_data.addr_lat == 0 || identify_data.addr_long == 0){
+				let getCurrentProduct = "SELECT pro_idx, pro_cate, pro_name, pro_origin, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx FROM product ORDER BY pro_regist_date DESC limit 20"; // 최신상품 20개
+				let pro_variable;
+				(async function(){
+					let connections = await pool_async.getConnection();
+					let result = await connections.query(getCurrentProduct);
+					pro_variable = result[0];
+					for(let i = 0 ; i < pro_variable.length ; i++){
+						pro_variable[i].pro_img = null;
+						let result2 = await connections.query("SELECT * FROM product_image WHERE pro_idx = ? limit 1", pro_variable[i].pro_idx);
+						if(result2[0].length!=0)
+							pro_variable[i].pro_img = result2[0].pro_img;
+					}
+				res.status(200).send({
+					message : "Success to Get Data",
+					data : pro_variable
+				});
+
+				callback("Success to Get Data");
+				return;
+			})();
+		} else{
 			connection.query(getMarketQuery, [identify_data.addr_lat, identify_data.addr_long], function(err, result){
 				if(result.length == 0){ // 해당 토큰이 없다 
 					connection.release();
@@ -82,7 +104,8 @@ router.get('/', (req, res) =>{
 					connection.release();
 				}
 			});
-		},
+		}
+	},
 
 		// 4. 마켓 index를 가지고 product search, 등록 순 (팔린 상품, timesale 상품 제외)
 		function(identify_data, callback){
@@ -117,8 +140,9 @@ router.get('/', (req, res) =>{
 						product.pro_sale_price = data[0].pro_sale_price;
 						product.pro_ex_date = data[0].pro_ex_date;
 						product.pro_regist_date = data[0].pro_regist_date;
+						product.pro_origin = data[0].pro_origin;
 						product.pro_info = data[0].pro_info;
-						product.pro_img = [];
+						product.pro_img = null;
 						product.mar_idx = mar_idx[i];
 						saleProduct_info[cnt] = {};
 						saleProduct_info[cnt] = product;
@@ -132,8 +156,8 @@ router.get('/', (req, res) =>{
 			})();
 		},
 		// 5. 상품 image 가져오기
-		function(identify_data, callback){
-			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
+		function(identify_data, callback){ // 여러 장에서 대표사진 한 장만
+			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ? limit 1";
 
 
 			(async function(){
@@ -156,12 +180,12 @@ router.get('/', (req, res) =>{
 						callback("connection.query Error : " + err);
 					}
 
-					if(data.length != 0){
-						product_image = [];
-						for(let j = 0 ; j < data.length ; j++){
-							product_image[j] = data[j].pro_img;
-						}
-						saleProduct_info[i].pro_img = product_image.slice(0);
+					if(data.length != 0){ // 여러 장에서 대표사진 한 장만 
+						// product_image = [];
+						// for(let j = 0 ; j < data.length ; j++){
+						// 	product_image[j] = data[j].pro_img;
+						// }
+						saleProduct_info[i].pro_img = data[0].pro_img;
 					}
 
 				}
