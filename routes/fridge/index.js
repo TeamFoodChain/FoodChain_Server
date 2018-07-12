@@ -12,7 +12,7 @@ router.get('/', (req, res, next) => {
 
 router.use('/manage', manageRouter);
 router.use('/store', storeRouter);
-router.use('/fridge/camera', cameraRouter);
+router.use('/camera', cameraRouter);
 
 
 module.exports = router;
