@@ -40,9 +40,9 @@ router.post('/', async function(req, res) {
             res.status (500).send({
                 message : "Internal Server Error"
             });
-        }else if(interest.length <3){
+        }else if(interest.length >2){
             res.status(400).send({
-                message: "Lack of Information"
+                message: "Exceed of Information"
             });
         }else {
             res.status(200).send({
