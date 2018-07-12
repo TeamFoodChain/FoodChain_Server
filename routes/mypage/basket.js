@@ -16,9 +16,10 @@ router.post('/', async (req, res, next) => {
     let insertQuery;
     let insertResult;
 
+
     if(decoded == -1) {
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
     }else{
         if(decoded.identify ==0){
@@ -40,7 +41,7 @@ router.post('/', async (req, res, next) => {
             });
         }else{
             res.status(200).send({
-                message: "Success to add"
+                message: "Success to Add"
                 });
             }}
 });
@@ -52,8 +53,10 @@ router.get('/',async (req,res,next)=> {
 
     let select_idxQuery;
     let select_idxResult;
-    let selectQuery;
-    let selectResult;
+    let getProductQuery;
+    let result;
+
+    
 
     if(decoded == -1) {
         res.status (500).send({
@@ -64,30 +67,30 @@ router.get('/',async (req,res,next)=> {
             select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
             select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
             let user_idx = select_idxResult[0].user_idx;
-            selectQuery = "SELECT * FROM  basket WHERE user_idx =? ORDER BY basket_date DESC";  
-            selectResult = await db.queryParam_Arr(selectQuery, [user_idx]);
+            getProductQuery = "SELECT pro_idx, pro_name, pro_ex_date, pro_regist_date, pro_info FROM product WHERE pro_idx IN (SELECT pro_idx FROM basket WHERE user_idx = ? ORDER BY basket_date DESC)";
+            result = await db.queryParam_Arr(getProductQuery, [user_idx]);
         }else {
             select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
             select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
             let sup_idx = select_idxResult[0].sup_idx;
-            selectQuery = "SELECT * FROM  basket WHERE sup_idx =? ORDER BY basket_date DESC";  
-            selectResult = await db.queryParam_Arr(selectQuery, [sup_idx]);
+            getProductQuery = "SELECT pro_idx, pro_name, pro_ex_date, pro_regist_date, pro_info FROM product WHERE pro_idx IN (SELECT pro_idx FROM basket WHERE sup_idx = ? ORDER BY basket_date DESC)";
+            result = await db.queryParam_Arr(getProductQuery, [sup_idx]);
             }
-            if(!selectResult){
+            if(!result){
                 res.status(500).send({
                     message : "Internal Server Error"
                 });
-            }else if (selectResult.length === 0){
+            }else if (result.length === 0){
                 res.status(400).send({
-                    message:"No data"
+                    message:"No Data"
                 });
             }else {
-                for(let i=0; i<selectResult.length; i++){
-                    selectResult[i].basket_date =moment(selectResult[i].basket_date).format('YYYY-MM-DD HH:mm:ss');  //등록날짜 추가
+                for(let i=0; i<result.length; i++){
+                    result[i].basket_date =moment(result[i].basket_date).format('YYYY-MM-DD HH:mm:ss');  //등록날짜 추가
                 }
                 res.status(200).send({
-                    message:"Success to load",
-                    data: selectResult
+                    message:"Success to Get Data",
+                    data: result
                 });
             }
         }
