@@ -18,7 +18,7 @@ router.post('/', async (req, res, next) => {
 
     if(decoded == -1) {
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
         console.log(decoded);
         console.log(token);
@@ -42,7 +42,7 @@ router.post('/', async (req, res, next) => {
             });
         }else{
             res.status(200).send({
-                message: "Success to add"
+                message: "Success to Add"
                 });
             }}
 });
@@ -59,7 +59,7 @@ router.get('/',async (req,res,next)=> {
 
     if(decoded == -1) {
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
         console.log(decoded);
         console.log(token);
@@ -83,14 +83,14 @@ router.get('/',async (req,res,next)=> {
                 });
             }else if (selectResult.length === 0){
                 res.status(400).send({
-                    message:"No data"
+                    message:"Null Value"
                 });
             }else {
                 for(let i=0; i<selectResult.length; i++){
                     selectResult[i].basket_date =moment(selectResult[i].basket_date).format('YYYY-MM-DD HH:mm:ss');  //등록날짜 추가
                 }
                 res.status(200).send({
-                    message:"Success to load",
+                    message:"Success to Get Data",
                     data: selectResult
                 });
             }
@@ -111,7 +111,7 @@ router.delete('/',async (req,res,next)=>{
 
     if(decoded == -1) {
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
         console.log(decoded);
         console.log(token);
@@ -136,7 +136,7 @@ router.delete('/',async (req,res,next)=>{
                 })
             }else{
                 res.status(200).send({
-                    message : "Succsss to delete"
+                    message : "Succsss to Delete"
                 })
             }}
         });

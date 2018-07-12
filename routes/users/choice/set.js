@@ -16,7 +16,7 @@ router.post('/', async function(req, res) {
 
     if(decoded == -1) {
         res.status (500).send({
-            message : "Internal server error"
+            message : "Internal Server Error"
         });
         console.log(decoded);
         console.log(token);
@@ -40,15 +40,15 @@ router.post('/', async function(req, res) {
         }
         if(!insertResult){ 
             res.status (500).send({
-                message : "Internal server error"
+                message : "Internal Server Error"
             });
         }else if(interest.length <3){
             res.status(400).send({
-                message: "lack of information"
+                message: "Lack of Information"
             });
         }else {
             res.status(200).send({
-                message : "Success to register"
+                message : "Success to Register"
             });
         }
     }

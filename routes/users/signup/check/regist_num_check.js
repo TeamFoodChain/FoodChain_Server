@@ -17,7 +17,7 @@ router.post('/',async(req,res)=>{
     if (!regExp.test(sup_regist_num)){
       res.status(400).send(
         {
-          message:"Invalid data"
+          message:"Invalid Data"
         }
       );
     }else{
@@ -30,11 +30,11 @@ router.post('/',async(req,res)=>{
         });
       }else if (checkResult.length === 1){
         res.status(400).send({
-          message:"This sup_regist_num already exists."
+          message:"This Sup_regist_num Already Exists."
         });
       }else{
         res.status(200).send({
-          message:"Success sup_regist_num check"
+          message:"Success Sup_regist_num Check"
         });
       }
     }

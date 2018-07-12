@@ -17,7 +17,7 @@ router.get('/', (req, res) =>{
 	let product = {}; // saleProduct_info에 상품을 담을 객체
 	let product_image = []; // 최신상품들의 이미지를 담을 배열
 
-
+	let coupon = {};
 	let reco_data = []; // 추천상품을 담을 배열
 
 	let mar_idx =  []; // 사용자 설정 위치 반경 2km 이내의 마켓들의 index
@@ -94,6 +94,12 @@ router.get('/', (req, res) =>{
 				let connection = await pool_async.getConnection();
 				for(let i = 0 ; i < mar_idx.length ; i++){
 					let result = await connection.query(getProductDataQuery, mar_idx[i]);
+					if(!result){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						return ;
+					}
 					let data = result[0];
 
 					if(result === undefined){
@@ -134,6 +140,12 @@ router.get('/', (req, res) =>{
 				let connection = await pool_async.getConnection();
 				for(let i = 0 ; i < saleProduct_info.length ; i++){
 					let result = await connection.query(getProductImageQuery, saleProduct_info[i].pro_idx);
+					if(!result){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						return ;
+					}
 					let data = result[0];
 
 					if(result === undefined){
@@ -174,7 +186,12 @@ router.get('/', (req, res) =>{
 			(async function(){
 				let connections = await pool_async.getConnection();
 				let result = await pool_async.query(getInterestQuery, identify_data.idx);
-
+				if(!result){
+					res.status(500).send({
+						message : "Internal Server Error"
+					});
+					return ;
+				}
 				let interest = result[0];
 				for(let i = 0 ; i < interest.length ; i++){
 					let result = await pool_async.query(getRecoQuery, [interest[i].interest, interest[i].interest]);
@@ -218,6 +235,12 @@ router.get('/', (req, res) =>{
 
 				for(let i = 0 ; i < reco_data.length ; i++){
 					let result = await pool_async.query(getProductImageQuery, reco_data[i].pro_idx);
+					if(!result){
+						res.status(500).send({
+							message : "Internal Server Error"
+						});
+						return ;
+					}
 					if(result[0].length != 0){
 						let img = result[0]
 						reco_data[i].pro_img = img[0].pro_img;
@@ -225,7 +248,7 @@ router.get('/', (req, res) =>{
 				}
 
 				connections.release();
-				callback(null, "Success to get data");
+				callback(null, "Success to Get Data");
 			})();
 
 		}
@@ -237,8 +260,9 @@ router.get('/', (req, res) =>{
 			console.log(err);
 		} else {
 			res.status(200).send({
-				message : "Success to get data",
+				message : "Success to Get Data",
 				data : saleProduct_info,
+				coupon : coupon,
 				reco : reco_data
 			});
 			console.log(result);

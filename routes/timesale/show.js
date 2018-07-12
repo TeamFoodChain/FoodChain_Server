@@ -22,7 +22,7 @@ router.get('/', (req, res) => {
 	// token verify
 	if (decoded == -1) {
 		res.status(500).send({
-			message : "token err"
+			message : "Token Error"
 		});
 	}
 
@@ -71,13 +71,13 @@ router.get('/', (req, res) => {
 					if(identify == 0){ // user 일 때 
 						console.log(result);
 						if(email === result[0].user_email && phone === result[0].user_phone){
-						console.log("success to verify");
+						console.log("Success to Verify");
 					} else {
 						res.status(400).send({
-							message : "Invalid token error"
+							message : "Invalid Token Error"
 						});
 						connection.release();
-						callback("Invalid token error");
+						callback("Invalid Token Error");
 						return;
 					}
 					// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
@@ -89,13 +89,13 @@ router.get('/', (req, res) => {
 
 					else{ // supplier 일 때
 					if(email === result[0].sup_email && phone === result[0].sup_phone){
-						console.log("success to verify");
+						console.log("Success to Verify");
 					} else {
 						res.status(400).send({
-							message : "Invalid token error"
+							message : "Invalid Token Error"
 						});
 						connection.release();
-						callback("Invalid token error");
+						callback("Invalid Token Error");
 						return;
 					}
 					// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)
@@ -208,7 +208,7 @@ router.get('/', (req, res) => {
 						saleProduct_info[i].product.pro_img = product_image.slice(0);
 					}
 				}
-				callback(null, "Success to load");
+				callback(null, "Success to Get Data");
 				connection.release();
 			})();
 
@@ -222,7 +222,7 @@ router.get('/', (req, res) => {
 			console.log(err);
 		} else {
 			res.status(200).send({
-				message : "Success to get data",
+				message : "Success to Get Data",
 				data : saleProduct_info
 			});
 			console.log(result);

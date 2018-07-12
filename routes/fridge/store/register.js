@@ -54,14 +54,6 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 	}
 
 	if(!pro_idx){
-	 // pro_idx가 없을 때 (새로운 상품을 등록)
-		// if(req.files){ // 이미지 db, s3에 저장
-		// 	// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
-		// 	for(let i = 0 ; i < req.files.length ; i++){
-		// 		pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
-		// 		s3.upload(req.files[i]);
-		// 	}
-		// }
 
 
 	let taskArray = [
@@ -74,11 +66,11 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				});
 			}).then(function(identify_data){
 				if(identify_data.identify == 0){
-					console.log("Access denied");
+					console.log("Access Denied");
 					res.status(400).send({
-						message : "Access denied"
+						message : "Access Denied"
 					});
-					callback("Access denied");
+					callback("Access Denied");
 					return;
 				}
 				callback(null, identify_data);
@@ -195,7 +187,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					callback("connection.query Error : " + err);
 					connection.release();
 				}  else{
-					callback(null, "Success to upload product");
+					callback(null, "Success to Upload Data");
 				connection.release();
 				}
 			});
@@ -206,7 +198,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-					message : "Success to upload product"
+					message : "Success to Upload Data"
 				});
 				console.log(result);
 			}
@@ -337,7 +329,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				});
 
 			}
-			callback(null, "Success to modify data");
+			callback(null, "Success to Modify Data");
 			connection.release();
 			}
 			];
@@ -346,7 +338,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-					message : "Success to modify data"
+					message : "Success to Modify Data"
 				});
 				console.log(result);
 			}
@@ -365,7 +357,7 @@ router.delete('/', (req, res) => {
 	console.log(pro_idx);
 	if(!pro_idx){
 		res.status(200).send({
-			message : "No pro_idx value"
+			message : "Null Value"
 		});
 		return ;
 	}
@@ -437,7 +429,7 @@ router.delete('/', (req, res) => {
 					connection.release();
 				}
 				if(result.length == 0){
-					callback("Null Value");
+					callback("No Data");
 					connection.release();
 				} else {
 					callback(null);
@@ -451,7 +443,7 @@ router.delete('/', (req, res) => {
 			} else{
 				s3.delete(pro_images);
 			}
-				callback(null, "Success to delete product");
+				callback(null, "Success to Delete Data");
 		}
 		];
 
@@ -460,7 +452,7 @@ router.delete('/', (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-					message : "Success to delete product"
+					message : "Success to Delete Data"
 				});
 				console.log(result);
 			}

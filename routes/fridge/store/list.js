@@ -23,11 +23,11 @@ router.get('/', (req, res) => {
 				});
 			}).then(function(identify_data){
 				if(identify_data.identify == 0){
-					console.log("Access denied");
+					console.log("Access Denied");
 					res.status(400).send({
-						message : "Access denied"
+						message : "Access Denied"
 					});
-					callback("Access denied");
+					callback("Access Denied");
 					return;
 				}
 				callback(null, identify_data);
@@ -74,7 +74,7 @@ router.get('/', (req, res) => {
 				}
 			}
 			connections.release();
-			callback(null, "Success to get data");
+			callback(null, "Success to Get Data");
 		})();
 	}
 	];
@@ -83,7 +83,7 @@ router.get('/', (req, res) => {
 			console.log(err);
 		} else {
 			res.status(200).send({
-				message : "Success to get data",
+				message : "Success to Get Data",
 				data : product
 			});
 			console.log(result);

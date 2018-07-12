@@ -129,7 +129,7 @@ router.get('/', (req, res) => {
 						saledProduct_info[i].product.pro_img = product_image.slice(0);
 					}
 				}
-				callback(null, "Success to load");
+				callback(null, "Success to Get Data");
 				connection.release();
 			})();
 		}
@@ -140,7 +140,7 @@ router.get('/', (req, res) => {
 				console.log(err);
 			} else {
 				res.status(200).send({
-						message : "Success to load",
+						message : "Success to Get Data",
 						data : saledProduct_info
 					});
 				console.log(result);
