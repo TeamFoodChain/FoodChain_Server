@@ -72,7 +72,7 @@ router.get('/',async (req,res,next)=> {
             for (let i = 0; i < select_proResult.length; i++) {
                 pro_idx[i] = select_proResult[i].pro_idx;
             }
-            getProductQuery = "SELECT product.pro_idx, product.pro_name, product.pro_ex_date, product.pro_regist_date, product.pro_info, product_image.pro_img FROM product INNER JOIN product_image ON product.pro_idx = product_image.pro_idx WHERE product.pro_idx =  ?";
+            getProductQuery = "SELECT product.pro_idx, product.pro_name, product.pro_price , product.pro_sale_price, product.pro_ex_date, product.pro_regist_date, product.pro_info, product_image.pro_img FROM product INNER JOIN product_image ON product.pro_idx = product_image.pro_idx WHERE product.pro_idx =  ?";
             for(let i = 0 ; i < pro_idx.length; i++){
                 result[i] = await db.queryParam_Arr(getProductQuery, [pro_idx[i]]);
 
@@ -86,7 +86,7 @@ router.get('/',async (req,res,next)=> {
             for (let i = 0; i < select_proResult.length; i++) {
                 pro_idx[i] = select_proResult[i].pro_idx;
             }
-            getProductQuery = "SELECT product.pro_idx, product.pro_name, product.pro_ex_date, product.pro_regist_date, product.pro_info, product_image.pro_img FROM product INNER JOIN product_image ON product.pro_idx = product_image.pro_idx WHERE product.pro_idx =  ?";
+            getProductQuery = "SELECT product.pro_idx, product.pro_name,  product.pro_price , product.pro_sale_price, product.pro_ex_date, product.pro_regist_date, product.pro_info, product_image.pro_img FROM product INNER JOIN product_image ON product.pro_idx = product_image.pro_idx WHERE product.pro_idx =  ?";
             for(let i = 0 ; i < pro_idx.length; i++){
                 result[i] = await db.queryParam_Arr(getProductQuery, [pro_idx[i]]);
             }
@@ -100,10 +100,7 @@ router.get('/',async (req,res,next)=> {
                 res.status(400).send({
                     message:"No Data"
                 });
-            }else {
-                for(let i=0; i<result.length; i++){
-                    result[i].basket_date =moment(result[i].basket_date).format('YYYY-MM-DD HH:mm:ss');  //등록날짜 추가
-                }
+            }else{
                 res.status(200).send({
                     message:"Success to Get Data",
                     data: result
