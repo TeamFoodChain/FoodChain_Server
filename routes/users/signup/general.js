@@ -37,7 +37,6 @@ router.post('/',async(req,res)=>{
       res.status(500).send({
         message:"Internal Server Error"
       });
-      return ;
     }else{
       token = jwt.sign(user_email, user_pw, 0);
       if(!token){
