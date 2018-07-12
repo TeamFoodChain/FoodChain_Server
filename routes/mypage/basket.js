@@ -54,32 +54,48 @@ router.get('/',async (req,res,next)=> {
     let select_idxQuery;
     let select_idxResult;
     let getProductQuery;
-    let result;
-
-    
+    let result = [];
+    let pro_idx = [];
+    let select_proQuery;
 
     if(decoded == -1) {
         res.status (500).send({
             message : "Internal server error"
         });
     }else{
-        if(decoded.identify ==0){
-            select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
-            select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
+        if(decoded.identify == 0){
+            let select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
+            let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]);
             let user_idx = select_idxResult[0].user_idx;
-            getProductQuery = "SELECT pro_idx, pro_name, pro_ex_date, pro_regist_date, pro_info FROM product WHERE pro_idx IN (SELECT pro_idx FROM basket WHERE user_idx = ? ORDER BY basket_date DESC)";
-            result = await db.queryParam_Arr(getProductQuery, [user_idx]);
+            let select_proQuery = "SELECT pro_idx FROM basket WHERE user_idx = ? ORDER BY basket_date DESC";
+            let select_proResult = await db.queryParam_Arr(select_proQuery,[user_idx]); 
+            for (let i = 0; i < select_proResult.length; i++) {
+                pro_idx[i] = select_proResult[i].pro_idx;
+            }
+            getProductQuery = "SELECT product.pro_idx, product.pro_name, product.pro_ex_date, product.pro_regist_date, product.pro_info, product_image.pro_img FROM product INNER JOIN product_image ON product.pro_idx = product_image.pro_idx WHERE product.pro_idx =  ?";
+            for(let i = 0 ; i < pro_idx.length; i++){
+                result[i] = await db.queryParam_Arr(getProductQuery, [pro_idx[i]]);
+
+            }
         }else {
-            select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
-            select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
+            let select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
+            let select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
             let sup_idx = select_idxResult[0].sup_idx;
-            getProductQuery = "SELECT pro_idx, pro_name, pro_ex_date, pro_regist_date, pro_info FROM product WHERE pro_idx IN (SELECT pro_idx FROM basket WHERE sup_idx = ? ORDER BY basket_date DESC)";
-            result = await db.queryParam_Arr(getProductQuery, [sup_idx]);
+            let select_proQuery = "SELECT pro_idx FROM basket WHERE sup_idx = ? ORDER BY basket_date DESC";
+            let select_proResult = await db.queryParam_Arr(select_proQuery,[sup_idx]); 
+            for (let i = 0; i < select_proResult.length; i++) {
+                pro_idx[i] = select_proResult[i].pro_idx;
+            }
+            getProductQuery = "SELECT product.pro_idx, product.pro_name, product.pro_ex_date, product.pro_regist_date, product.pro_info, product_image.pro_img FROM product INNER JOIN product_image ON product.pro_idx = product_image.pro_idx WHERE product.pro_idx =  ?";
+            for(let i = 0 ; i < pro_idx.length; i++){
+                result[i] = await db.queryParam_Arr(getProductQuery, [pro_idx[i]]);
+            }
             }
             if(!result){
                 res.status(500).send({
                     message : "Internal Server Error"
-                });
+                }); 
+
             }else if (result.length === 0){
                 res.status(400).send({
                     message:"No Data"
