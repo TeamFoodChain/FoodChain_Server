@@ -18,8 +18,6 @@ router.post('/', async function(req, res) {
         res.status (500).send({
             message : "Internal server error"
         });
-        console.log(decoded);
-        console.log(token);
     }else{
         if(decoded.identify ==0){
             select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";

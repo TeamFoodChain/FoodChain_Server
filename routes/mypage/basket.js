@@ -20,23 +20,21 @@ router.post('/', async (req, res, next) => {
         res.status (500).send({
             message : "Internal server error"
         });
-        console.log(decoded);
-        console.log(token);
     }else{
         if(decoded.identify ==0){
             select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
             select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
             let user_idx = select_idxResult[0].user_idx;
-            insertQuery = "INSERT INTO basket WHERE (user_idx,pro_idx) VALUES (?,?)";
+            insertQuery = "INSERT INTO basket (user_idx,pro_idx) VALUES (?,?)";
             insertResult = await db.queryParam_Arr(insertQuery,[user_idx, pro_idx]);
         }else{
-            select_idxQuery = "SELECT sup_idx FROM user WHERE user_email = ?";
+            select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
             select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
             let sup_idx = select_idxResult[0].sup_idx;
-            insertQuery = "INSERT INTO basket WHERE (sup_idx,pro_idx) VALUES (?,?)";
+            insertQuery = "INSERT INTO basket (sup_idx,pro_idx) VALUES (?,?)";
             insertResult = await db.queryParam_Arr(insertQuery,[sup_idx, pro_idx]);
-            }    
-            if(!insertQuery){
+            }
+        if(!insertResult){
                 res.status(500).send({
                     message : "Internal Server Error"
             });
@@ -61,8 +59,6 @@ router.get('/',async (req,res,next)=> {
         res.status (500).send({
             message : "Internal server error"
         });
-        console.log(decoded);
-        console.log(token);
     }else{
         if(decoded.identify ==0){
             select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
@@ -113,8 +109,7 @@ router.delete('/',async (req,res,next)=>{
         res.status (500).send({
             message : "Internal server error"
         });
-        console.log(decoded);
-        console.log(token);
+
     }else{
         if(decoded.identify ==0){
             select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
