@@ -10,6 +10,9 @@ router.post('/',async(req, res) =>{
 	let token = req.headers.token;
 	let checkQuery;
 	let checkResult;
+	
+	let cate_flag;
+	let locate_flag;
 
 	if (!id) {
 		res.status(400).send({
@@ -42,24 +45,28 @@ router.post('/',async(req, res) =>{
 						return ;
 					}else{
 						checkQuery = "SELECT interest FROM interest WHERE user_idx = ?";
-						checkResult = await db.queryParam_Arr(checkQuery, [checkResult[0].user_idx]);
-						if(checkResult == "" || checkResult == null || checkResult == undefined || ( checkResult != null && typeof checkResult == "object" && !Object.keys(checkResult).length)){
-							res.status(201).send({
-								message : "Success Signin",
-								token : token,
-								identify : 0,
-								cate_flag : 0
-							});
-							return ;
+						checkResult1 = await db.queryParam_Arr(checkQuery, [checkResult[0].user_idx]);
+						if(checkResult1 == "" || checkResult1 == null || checkResult1 == undefined || ( checkResult1 != null && typeof checkResult1 == "object" && !Object.keys(checkResult1).length)){
+							cate_flag = 0;
 						}else{
-							res.status(201).send({
-								message : "Success Signin",
-								token : token,
-								identify : 0,
-								cate_flag : 1
-							});
-							return ;
+							cate_flag = 1;
 						}
+
+						checkQuery = "SELECT user_addr FROM user WHERE user_idx = ?";
+						checkResult2 = await db.queryParam_Arr(checkQuery, [checkResult[0].user_idx]);
+						if(checkResult2.user_addr == null){
+							locate_flag = 0;
+						} else{
+							locate_flag = 1;
+						}
+						res.status(201).send({
+							message : "Success Signin",
+							token : token,
+							identify : 0,
+							cate_flag : cate_flag,
+							locate_flag : locate_flag
+						});
+						return;
 					}
 				}else{
 					res.status(400).send({
@@ -93,24 +100,28 @@ router.post('/',async(req, res) =>{
 						return ;
 					}else{
 						checkQuery = "SELECT interest FROM interest WHERE sup_idx = ?";
-						checkResult = await db.queryParam_Arr(checkQuery, [checkResult[0].sup_idx]);
-						if(checkResult == "" || checkResult == null || checkResult == undefined || ( checkResult != null && typeof checkResult == "object" && !Object.keys(checkResult).length)){
-							res.status(201).send({
-								message : "Success Signin",
-								token : token,
-								identify : 1,
-								cate_flag : 0
-							});
-							return ;
+						checkResult1 = await db.queryParam_Arr(checkQuery, [checkResult[0].sup_idx]);
+						if(checkResult1 == "" || checkResult1 == null || checkResult1 == undefined || ( checkResult1 != null && typeof checkResult1 == "object" && !Object.keys(checkResult1).length)){
+							cate_flag = 0;
 						}else{
-							res.status(201).send({
-								message : "Success Signin",
-								token : token,
-								identify : 1,
-								cate_flag : 1
-							});
-							return ;
+							cate_flag = 1;
 						}
+
+						checkQuery = "SELECT sup_addr FROM supplier WHERE sup_idx = ?";
+						checkResult2 = await db.queryParam_Arr(checkQuery, [checkResult[0].sup_idx]);
+						if(checkResult2.sup_addr == null){
+							locate_flag = 0;
+						} else{
+							locate_flag = 1;
+						}
+						res.status(201).send({
+							message : "Success Signin",
+							token : token,
+							identify : 1,
+							cate_flag : cate_flag,
+							locate_flag : locate_flag
+						});
+						return;
 					}
 				}else{
 					res.status(400).send({

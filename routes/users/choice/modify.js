@@ -15,6 +15,9 @@ router.put('/', async (req, res, next) => {
   let deleteResult;
   let insertQuery;
   let insertResult;
+
+  let user_idx
+  let sup_idx
     console.log(decoded);
   if(decoded == -1) {                  
         res.status (500).send({
@@ -24,7 +27,7 @@ router.put('/', async (req, res, next) => {
         if(decoded.identify == 0){                                        //일반 사용자
             select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";             
             select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
-            let user_idx = select_idxResult[0].user_idx;
+            user_idx = select_idxResult[0].user_idx;
             if(!select_idxResult){
                 res.status(500).send({
                     message: "Internal Server Error"
@@ -61,8 +64,8 @@ router.put('/', async (req, res, next) => {
                 }else{
                     select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
                     select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
-                    let sup_idx = select_idxResult[0].sup_idx;
-                    insertQuery = "INSERT INTO interest (interest,user_idx) VALUES (?,?)";
+                    sup_idx = select_idxResult[0].sup_idx;
+                    insertQuery = "INSERT INTO interest (interest,sup_idx) VALUES (?,?)";
                     for(let i = 0 ; i < interest.length; i++){
                         insertResult = await db.queryParam_Arr(insertQuery, [interest[i], sup_idx]);}
                 }}}             
@@ -70,9 +73,9 @@ router.put('/', async (req, res, next) => {
                     res.status (500).send({
                         message : "Internal Server Error"
                     });
-                }else if(interest.length <3){
+                }else if(interest.length >2){
                     res.status(400).send({
-                        message: "Lack of Information"
+                       message: "Exceed of Information"
                     });
                 }else{
                     res.status(200).send({

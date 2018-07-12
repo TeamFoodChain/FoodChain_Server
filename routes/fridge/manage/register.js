@@ -22,7 +22,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
     let registerQuery;
     let registerResult;
 
-    if(!fri_cate || !fri_name || !fri_ex_date || !fri_info || !token || !fri_regist_date){
+    if(!fri_cate || !fri_name || !fri_ex_date || !token || !fri_regist_date){
         res.status(400).send({
             message : "Null Value"
         });
@@ -36,7 +36,11 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                     message : "Tokne Error"
                 });
             }else{
-                let selectQuery = "SELECT user_idx FROM user WHERE user_email= ?";
+                let selectQuery = "";
+                if(decoded.identify == 0 )
+                    selectQuery = "SELECT user_idx FROM user WHERE user_email= ?";
+                else
+                    selectQuery = "SELECT sup_idx FROM supplier WHERE sup_email= ?";
                 let selectResult = await db.queryParam_Arr(selectQuery, [decoded.id]);
                 let user_idx = selectResult[0].user_idx;
                 
