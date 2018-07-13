@@ -51,7 +51,7 @@ router.get('/', (req, res) => {
 		function(connection, identify_data, callback){
 			// user or sup index를 사용하여 product index를 가져온다.
 			let getSupBookmarkIdxQuery = "SELECT pro_idx FROM bookmark WHERE sup_idx = ? OR user_idx = ?";
-			connection.query(getSupBookmarkIdxQuery, [identify_data._idx, identify_data._idx], function(err, result){
+			connection.query(getSupBookmarkIdxQuery, [identify_data.idx, identify_data.idx], function(err, result){
 				if(err) {
 					res.status(500).send({
 						message : "Internal Server Error"
@@ -98,7 +98,7 @@ router.get('/', (req, res) => {
 						product.pro_sale_price = data[0].pro_sale_price;
 						product.pro_info = data[0].pro_info;
 						bookmark_info[i] = {};
-						bookmark_info[i].product = product;
+						bookmark_info[i] = product;
 					} 
 				}
 
@@ -115,7 +115,7 @@ router.get('/', (req, res) => {
 
 				for(let i = 0 ; i < bookmark_info.length ; i++){
 					let value = bookmark_info[i];
-					let result = await pool_async.query(getProductImageQuery, value.product.pro_idx);
+					let result = await pool_async.query(getProductImageQuery, value.pro_idx);
 					let data = result[i];
 					//console.log("i : "+ i + " " +result[i]);
 					if(result === undefined){
@@ -131,7 +131,7 @@ router.get('/', (req, res) => {
 						for(let j = 0 ; j < data.length ; j++){
 							product_image[j] = data[j].pro_img;
 						}
-						bookmark_info[i].product.pro_img = product_image.slice(0);
+						bookmark_info[i].pro_img = product_image.slice(0);
 					}
 				}
 				connection.release();
@@ -143,6 +143,10 @@ router.get('/', (req, res) => {
 			if(err){
 				console.log(err);
 			} else {
+				res.status(200).send({
+					message : result,
+					data : bookmark_info
+				});
 				console.log(result);
 			}
 		});

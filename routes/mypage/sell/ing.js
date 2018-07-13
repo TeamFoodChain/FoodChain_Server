@@ -90,7 +90,7 @@ router.get('/', (req, res) => {
 						product.pro_sale_price = data[0].pro_sale_price;
 						product.pro_info = data[0].pro_info;
 						saleProduct_info[i] = {};
-						saleProduct_info[i].product = product;
+						saleProduct_info[i] = product;
 					}
 				}
 				callback(null, pro_idx);
@@ -107,8 +107,9 @@ router.get('/', (req, res) => {
 
 				for(let i = 0 ; i < saleProduct_info.length ; i++){
 					let value = saleProduct_info[i];
-					let result = await pool_async.query(getProductImageQuery, value.product.pro_idx);
-					let data = result[i];
+					let result = await pool_async.query(getProductImageQuery, value.pro_idx);
+					let data = result[0];
+
 					//console.log("i : "+ i + " " +result[i]);
 					if(result === undefined){
 						res.status(500).send({
@@ -117,13 +118,13 @@ router.get('/', (req, res) => {
 						connection.release();
 						callback("connection.query Error : " + err);
 					}
-
+						saleProduct_info[i].pro_img = [];
 					if(data){
 						product_image = [];
 						for(let j = 0 ; j < data.length ; j++){
 							product_image[j] = data[j].pro_img;
 						}
-						saleProduct_info[i].product.pro_img = product_image.slice(0);
+						saleProduct_info[i].pro_img = product_image.slice(0);
 					}
 				}
 				callback(null, "Success to Get Data");
@@ -265,9 +266,6 @@ router.put('/', (req, res) => {
           });
           callback("connection.query Error : " + err);
         } else {
-          res.status(200).send({
-            message: "Success to Modify Data"
-          });
           callback(null, "Success to Modify Data");
         }
         connection.release(); // connection 반환
@@ -279,6 +277,9 @@ router.put('/', (req, res) => {
 			if(err){
 				console.log(err);
 			} else {
+				res.status(200).send({
+					message: "Success to Modify Data"
+				});
 				console.log(result);
 			}
 		});
