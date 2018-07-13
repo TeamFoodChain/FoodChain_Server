@@ -28,6 +28,7 @@ router.post('/', async function(req, res, next) {
                 res.status(400).send({                             //data 값이 하나라도 없는 경우
                     message: "Null Value"
                 });
+                return;
             }else {
                 select_idxQuery = "SELECT user_idx FROM user WHERE user_email = ?";
                 select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
@@ -35,19 +36,20 @@ router.post('/', async function(req, res, next) {
                 insertQuery = "UPDATE user SET user_addr = ?, user_addr_lat = ?, user_addr_long = ? WHERE user_idx= ?";
                 insertResult = await db.queryParam_Arr(insertQuery,[user_addr, user_addr_lat, user_addr_long, user_idx])};
         } else{
-            let sup_addr = req.body.locate_name;
+            let sup_addr = req.body.locate_addr;
             let sup_addr_lat = req.body.locate_lat;
             let sup_addr_long = req.body.locate_long;  
-        
             if (!sup_addr || !sup_addr_lat || !sup_addr_long){ 
             res.status(400).send({                             //data 값이 하나라도 없는 경우
                 message: "Null Value"
             });
+            return;
             }else {
                 select_idxQuery = "SELECT sup_idx FROM supplier WHERE sup_email = ?";
                 select_idxResult = await db.queryParam_Arr(select_idxQuery,[decoded.id]); 
+                console.log(select_idxResult);
                 let sup_idx = select_idxResult[0].sup_idx;
-                insertQuery = "UPDATE sup SET sup_addr = ?, sup_addr_lat = ?, sup_addr_long = ? WHERE sup_idx= ?";
+                insertQuery = "UPDATE supplier SET sup_addr = ?, sup_addr_lat = ?, sup_addr_long = ? WHERE sup_idx= ?";
                 insertResult = await db.queryParam_Arr(insertQuery,[sup_addr, sup_addr_lat, sup_addr_long, sup_idx])
             }
         }
