@@ -16,7 +16,7 @@ module.exports = function(token, callback){
 
 	// token verify
 	if (decoded == -1) {
-		callback("token err");
+		callback("Token Error");
 		return ;
 	}
 
@@ -51,11 +51,11 @@ module.exports = function(token, callback){
 
 					if(identify == 0){ // user 일 때, email 또는 phone이 id가 된다.
 						if((id === data[0].user_email || id === data[0].user_phone) && pw === data[0].user_pw){
-							console.log("success to verify");
+							console.log("Success to Verify");
 						} else {
 							connection.release();
-							console.log("Invalid token error");
-							callback("Invalid token error");
+							console.log("Invalid Token Error");
+							callback("Invalid Token Error");
 							return ;
 						}
 
@@ -75,11 +75,11 @@ module.exports = function(token, callback){
 
 					else{ // supplier 일 때
 						if((id === data[0].sup_email || id === data[0].sup_phone) && pw === data[0].sup_pw){
-							console.log("success to verify");
+							console.log("Success to Verify");
 						} else {
 							connection.release();
-							console.log("Invalid token error");
-							callback("Invalid token error");
+							console.log("Invalid Token Error");
+							callback("Invalid Token Error");
 							return ;
 						}
 							// 다음 function을 위해 identify_data라는 변수로 통일시켜 준다. (user_~~, sup_~~ 로 나뉘기 때문)

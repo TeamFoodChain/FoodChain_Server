@@ -76,7 +76,9 @@ router.get('/', (req, res) =>{
 					}
 				res.status(200).send({
 					message : "Success to Get Data",
-					data : pro_variable
+					data : pro_variable,
+					coupon : coupon,
+					reco : reco_data
 				});
 
 				callback("Success to Get Data");
@@ -84,7 +86,7 @@ router.get('/', (req, res) =>{
 			})();
 		} else{
 			connection.query(getMarketQuery, [identify_data.addr_lat, identify_data.addr_long], function(err, result){
-				if(result.length == 0){ // 해당 토큰이 없다 
+				if(result.length == 0){ // 데이터가 없다.
 					res.status(400).send({
 						message : "No Data"
 					});
@@ -227,7 +229,6 @@ router.get('/', (req, res) =>{
 					for(let j = 0 ; j < interestPro.length ; j++){
 						reco_data[cnt] = {};
 
-						interestPro[j].dist = distance(identify_data.addr_lat, identify_data.addr_long, interestPro[j].mar_locate_lat, interestPro[j].mar_locate_long);
 						delete interestPro[j].mar_addr; // 프로퍼티 삭제
 						delete interestPro[j].mar_locate_lat;
 						delete interestPro[j].mar_locate_long;
