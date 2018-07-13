@@ -24,7 +24,6 @@ router.post('/',async(req, res) =>{
 
 			checkQuery = 'SELECT * FROM user WHERE user_id = ?';
 			checkResult = await db.queryParam_Arr(checkQuery, [id]);
-
 			if (!checkResult) {
 				res.status(500).send({
 					message : "Internal Server Error"
@@ -53,8 +52,8 @@ router.post('/',async(req, res) =>{
 						}
 
 						checkQuery = "SELECT user_addr FROM user WHERE user_idx = ?";
-						checkResult2 = await db.queryParam_Arr(checkQuery, [checkResult[0].user_idx]);
-						if(checkResult2.user_addr == null){
+						checkResult2 = await db.queryParam_Arr(checkQuery, [checkResult[0].user_idx]);					
+						if(checkResult2[0].user_addr == null){
 							locate_flag = 0;
 						} else{
 							locate_flag = 1;
@@ -109,7 +108,7 @@ router.post('/',async(req, res) =>{
 
 						checkQuery = "SELECT sup_addr FROM supplier WHERE sup_idx = ?";
 						checkResult2 = await db.queryParam_Arr(checkQuery, [checkResult[0].sup_idx]);
-						if(checkResult2.sup_addr == null){
+						if(checkResult2[0].sup_addr == null){
 							locate_flag = 0;
 						} else{
 							locate_flag = 1;

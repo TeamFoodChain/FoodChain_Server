@@ -114,7 +114,8 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 		},
 		// 4. s3에 이미지 등록
 		function(connection, identify_data, callback){
-			if(req.files){ // 이미지 db, s3에 저장
+			console.log(req.files)
+			if(req.files.length != 0){ // 이미지 db, s3에 저장
 				console.log(req.files);
 			// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
 				for(let i = 0 ; i < req.files.length ; i++){
@@ -126,7 +127,14 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					console.log(result);
 						callback(null, connection, identify_data);
 				})();
-			} 
+			} else {
+				res.status(400).send({
+					message : "No Image"
+				});
+				connection.release();
+				callback("No Image");
+				return;
+			}
 		},
 		// 5. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
 		function(connection, identify_data, callback){
@@ -250,7 +258,14 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 						});
 						callback("connection.query Error : " + err);
 						connection.release();
-					} else {
+					} else if(result.affectedRows == 0){
+						res.status(400).send({
+							message : "Invalid Index"
+						});
+						callback("Invalid Index");
+						connection.release();
+						return;
+					} else{
 						callback(null, connection);
 					}
 				});
@@ -318,20 +333,25 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 			// 7. DB에 새로운 이미지를 등록
 			function(connection, callback){
 			let insertProductImageQuery = "INSERT INTO product_image (pro_idx, pro_img) VALUES(?, ?)";
-			for(let i = 0 ; i < pro_image.length ; i++){
-				connection.query(insertProductImageQuery, [pro_idx, pro_image[i]], function(err, result){
-					if(err) {
+			(async function(){
+				let connections = await pool_async.getConnection();
+				for(let i = 0 ; i < pro_image.length ; i++){
+					let result = connections.query(insertProductImageQuery, [pro_idx, pro_image[i]]);
+					if(!result){
 						res.status(500).send({
 							message : "Internal Server Error"
 						});
 						callback("connection.query Error : " + err);
-						connection.release();
-					} 
-				});
+						connections.release();
+						return;
+					}
 
-			}
-			callback(null, "Success to Modify Data");
-			connection.release();
+				}
+
+				callback(null, "Success to Modify Data");
+				connection.release();
+
+			})();
 			}
 			];
 		async.waterfall(taskArray, function(err, result){

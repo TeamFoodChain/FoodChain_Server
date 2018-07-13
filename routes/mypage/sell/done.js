@@ -66,6 +66,7 @@ router.get('/', (req, res) => {
 
 		// 4. 받은 pro_idx와 비교, 팔렸는 지 확인한 후 팔린 물건을 가져온다. pro_issell==1 일 때 팔림
 		function(pro_idx, callback){
+			let cnt = 0;
 			let getSaledProductDataQuery = "SELECT * FROM product WHERE pro_idx = ? AND pro_issell = 1";
 
 
@@ -76,7 +77,6 @@ router.get('/', (req, res) => {
 					let value = pro_idx[i];
 					let result = await connection.query(getSaledProductDataQuery, value.pro_idx);
 					let data = result[0];
-
 					if(result === undefined){
 						res.status(500).send({
 							message : "Internal Server Error"
@@ -92,8 +92,9 @@ router.get('/', (req, res) => {
 						product.pro_price = data[0].pro_price;
 						product.pro_sale_price = data[0].pro_sale_price;
 						product.pro_info = data[0].pro_info;
-						saledProduct_info[i] = {};
-						saledProduct_info[i].product = product;
+						saledProduct_info[cnt] = {};
+						saledProduct_info[cnt] = product;
+						cnt++;
 					} 
 
 				}
@@ -110,8 +111,8 @@ router.get('/', (req, res) => {
 
 				for(let i = 0 ; i < saledProduct_info.length ; i++){
 					let value = saledProduct_info[i];
-					let result = await pool_async.query(getProductImageQuery, value.product.pro_idx);
-					let data = result[i];
+					let result = await pool_async.query(getProductImageQuery, value.pro_idx);
+					let data = result[0];
 					//console.log("i : "+ i + " " +result[i]);
 					if(result === undefined){
 						res.status(500).send({
@@ -122,11 +123,11 @@ router.get('/', (req, res) => {
 					}
 
 					if(data){
-						product_image = [];
+						product_image[i] = [];
 						for(let j = 0 ; j < data.length ; j++){
-							product_image[j] = data[j].pro_img;
+							product_image[i] = data[j].pro_img;
 						}
-						saledProduct_info[i].product.pro_img = product_image.slice(0);
+						saledProduct_info[i].pro_img = product_image[i].slice(0);
 					}
 				}
 				callback(null, "Success to Get Data");
