@@ -12,7 +12,7 @@ router.post('/',async(req,res)=>{
       }
     );
   }else{   
-    var regExp = /^[0-9]+$/;
+    var regExp = /^([0-9]{2,3})-?([0-9]{3,4})-?([0-9]{4})$/;
 
     if (!regExp.test(phone)){
       res.status(400).send(
