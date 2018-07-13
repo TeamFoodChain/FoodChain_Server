@@ -7,7 +7,7 @@ const jwt = require('../../../module/jwt.js');
 router.post('/',async(req, res) =>{
 	let id = req.body.id;
 	
-	let token = req.headers.token;
+	let token;
 	let checkQuery;
 	let checkResult;
 	

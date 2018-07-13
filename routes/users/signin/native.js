@@ -8,7 +8,7 @@ router.post('/',async(req, res) =>{
 	let user_id = req.body.user_id;
 	let user_pw = req.body.user_pw;
 	
-	let token = req.headers.token;
+	let token;
 	let checkQuery;
 	let checkResult;
 
