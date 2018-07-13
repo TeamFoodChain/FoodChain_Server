@@ -26,6 +26,7 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
     let insertProductImageQuery;
     let insertProductImageResult;
     let user_idx;
+    let fri_item_idx;
 
     if(!fri_cate || !fri_name || !fri_ex_date || !token || !fri_regist_date){
         res.status(400).send({
@@ -68,10 +69,16 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                         });
                     }
 
-                    registerQuery = "INSERT INTO fridge_item (fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date) VALUES(?, ?, ?, ?, ?)";
-                    registerResult = await db.queryParam_Arr(registerQuery, [fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date]);
-                    let fri_item_idx = registerResult.insertId;
-                    
+                    if(!fri_info){
+                        registerQuery = "INSERT INTO fridge_item (fri_cate, fri_name, fri_ex_date, fri_regist_date) VALUES(?, ?, ?, ?)";
+                        registerResult = await db.queryParam_Arr(registerQuery, [fri_cate, fri_name, fri_ex_date, fri_regist_date]);
+                        fri_item_idx = registerResult.insertId;
+                    }else{
+                        registerQuery = "INSERT INTO fridge_item (fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date) VALUES(?, ?, ?, ?, ?)";
+                        registerResult = await db.queryParam_Arr(registerQuery, [fri_cate, fri_name, fri_ex_date, fri_info, fri_regist_date]);
+                        fri_item_idx = registerResult.insertId;
+                    }
+
                     if (!registerResult){ 
                         res.status(500).send({
                             message : "Internal Server Error"
