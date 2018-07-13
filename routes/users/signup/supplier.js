@@ -8,6 +8,7 @@ router.post('/',async(req,res)=>{
   let sup_name = req.body.sup_name;
   let sup_email = req.body.sup_email;
   let sup_phone = req.body.sup_phone;
+  sup_phone = sup_phone.replace(/\-/g,'');
   let sup_regist_num = req.body.sup_regist_num;
   let sup_pw = req.body.sup_pw;
   let sup_id = req.body.sup_id;

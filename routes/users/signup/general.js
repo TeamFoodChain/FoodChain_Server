@@ -9,6 +9,7 @@ router.post('/',async(req,res)=>{
   let user_name = req.body.user_name;
   let user_email = req.body.user_email;
   let user_phone = req.body.user_phone;
+  user_phone = user_phone.replace(/\-/g,'');
   let user_id = req.body.user_id;
 
   let insertQuery;
@@ -85,7 +86,15 @@ router.post('/',async(req,res)=>{
       let insertFridgeQuery = "INSERT INTO fridge (user_idx) VALUES(?)"
       let result = await db.queryParam_Arr(insertFridgeQuery, insertResult.insertId);
 
+      if(!result){
+        res.status(500).send({
+          message:"Internal Server Error"
+        });
+        console.log("Insert Error : ", result);
+      }
+
       token = jwt.sign(user_email, user_pw, 0);
+
       if(!token){
         res.status(500).send({
           message:"Internal Server Error"
@@ -95,6 +104,7 @@ router.post('/',async(req,res)=>{
       }else{
         insertQuery = "UPDATE user SET user_token = ? WHERE user_idx = ?";
         insertResult1 = await db.queryParam_Arr(insertQuery, [token, insertResult.insertId]);
+        
         if(!insertResult1){
           res.status(500).send({
             message:"Internal Server Error"
