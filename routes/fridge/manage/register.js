@@ -28,7 +28,6 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
     let UpdateFriItemQuery;
     let UpdateFriItemResult;
     let user_idx;
-    let fri_item_idx;
 
     if(!fri_cate || !fri_name || !fri_ex_date || !token || !fri_regist_date){
         res.status(400).send({
