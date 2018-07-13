@@ -17,7 +17,8 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
     let fri_info = req.body.fri_info;
     let fri_regist_date = moment().format("YYYY-MM-DD");
 
-    let fri_img = [];
+    let fri_img = req.body.fri_img; // 새로운 이미지를 s3, db 상에 등록
+    let fri_image = []; // 기존 s3, db 상에서 삭제될 이미지들
 
     let selectQuery;
     let selectResult;
@@ -62,7 +63,6 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                         // multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
                         for(let i = 0 ; i < req.files.length ; i++){
                             fri_img[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
-                            s3.upload(req.files[i]);
                         }
                     }else{
                         res.status(400).send({
@@ -137,10 +137,10 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                     });
                 }else if(getFriItemImageResult.length != 0){
                     for(let i = 0 ; i < getFriItemImageResult.length ; i++){
-                        fri_img[i] = {};
-                        fri_img[i].Key = getFriItemImageResult[i].fri_img.substring(55, getFriItemImageResult[i].fri_img.length);
+                        fri_image[i] = {};
+                        fri_image[i].Key = getFriItemImageResult[i].fri_img.substring(55, getFriItemImageResult[i].fri_img.length);
                     }
-                    console.log(fri_img);
+                    console.log(fri_image);
                     
                     let DeleteFriItemImageQuery = "DELETE FROM fridge_item_image WHERE fri_item_idx = ?";
                     let DeleteFriItemImageResult = await db.queryParam_Arr(DeleteFriItemImageQuery, [fri_item_idx]);
@@ -149,14 +149,14 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                             message : "Internal Server Error"
                         });
                     }else{
-                        if(!fri_img){
+                        if(!fri_image){
                             res.status(400).send({
                                 message : "No Image"
                             });
                         }else{
-                            console.log("fri_img : ");
-                            console.log(fri_img);
-                            s3.delete(fri_img);
+                            console.log("fri_image : ");
+                            console.log(fri_image);
+                            s3.delete(fri_image);
 
                             if(req.files){ // s3에 저장
                                 fri_img = [];
@@ -164,7 +164,6 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                                 // multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
                                 for(let i = 0 ; i < req.files.length ; i++){
                                     fri_img[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
-                                    s3.upload(req.files[i]);
                                 }
                             }
 

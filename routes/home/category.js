@@ -59,10 +59,10 @@ router.get('/', (req, res) => {
 			connection.query(getMarketQuery,[identify_data.addr_lat, identify_data.addr_long], function(err, result){
 				if(result.length == 0){ // 해당 데이터가 없다 
 					res.status(200).send({
-						message : "No data"
+						message : "No Data"
 					});
 					connection.release();
-					callback("No data");
+					callback("No Data");
 					return;
 				}
 
@@ -134,7 +134,7 @@ router.get('/', (req, res) => {
 						product.pro_regist_date = v.pro_regist_date;
 						product.pro_info = v.pro_info;
 						product.mar_idx = mar_idx_distance[i][0];
-						product.pro_img = [];
+						product.pro_img = null;
 						product.dist = mar_idx_distance[i][1];
 						saleProduct_info[cnt] = {};
 						saleProduct_info[cnt] = product;
@@ -152,7 +152,7 @@ router.get('/', (req, res) => {
 
 		// 5. 상품 이미지를 가져온다.
 		function(callback){
-			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";
+			let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ? limit 1";
 
 			(async function(){
 				let connection = await pool_async.getConnection();
@@ -170,13 +170,13 @@ router.get('/', (req, res) => {
 						callback("connection.query Error : " + err);
 					}
 
-					if(data.length != 0){
-						product_image = [];
-						for(let j = 0 ; j < data.length ; j++){
-							product_image[j] = data[j].pro_img;
-						}
-						//console.log("dddd : "+ product_image); // 여기가 callback 되고 나서, res.status가 찍히고 나서도 실행이 된다. 왜그럴까?
-						saleProduct_info[i].pro_img = product_image.slice(0);
+					if(data.length != 0){ // 여러 장에서 대표사진 한 장만 
+						// product_image = [];
+						// for(let j = 0 ; j < data.length ; j++){
+						// 	product_image[j] = data[j].pro_img;
+						// }
+						// //console.log("dddd : "+ product_image); // 여기가 callback 되고 나서, res.status가 찍히고 나서도 실행이 된다. 왜그럴까?
+						saleProduct_info[i].pro_img = data[0].pro_img;
 					}
 
 					saleProduct_info.sort(function(a, b){
@@ -188,7 +188,7 @@ router.get('/', (req, res) => {
 					});
 				}
 
-				callback(null, "Success to get data");
+				callback(null, "Success to Get Data");
 				connection.release();
 			})();
 		}
@@ -200,7 +200,7 @@ router.get('/', (req, res) => {
 			console.log(err);
 		} else {
 			res.status(200).send({
-				message : "success to get data",
+				message : "Success to Get Data",
 				data : saleProduct_info
 			});
 			console.log(result);

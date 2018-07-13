@@ -41,13 +41,14 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 	let pro_istimesale = req.body.pro_istimesale;
 	let pro_deadline_start = req.body.pro_deadline_start;
 	let pro_deadline_end = req.body.pro_deadline_end;
-	let pro_image = [];
+	let pro_image = []; // 기존 s3, db 상에서 삭제될 이미지들
+	let pro_img = req.body.pro_img; // 새로운 이미지를 s3, db상에 등록 
 
-	let pro_regist_date = moment().format("YYYY-MM-DD HH:mm:ss");
+	let pro_regist_date = moment().format("YYYY-MM-DD");
 
 
 	// 상품의 카테고리, 이름, 유통기한의 값이 없는 경우
-	if(!pro_name || !pro_cate || !pro_ex_date || !pro_price || !pro_sale_price || !pro_origin || !pro_istimesale){
+	if(!pro_name || !pro_cate || !pro_ex_date || !pro_price || !pro_sale_price || !pro_origin || !pro_istimesale || !pro_img){
 		res.status(400).send({
 			message : "Null Value"
 		});
@@ -112,30 +113,31 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				}
 			});
 		},
-		// 4. s3에 이미지 등록
-		function(connection, identify_data, callback){
-			console.log(req.files)
-			if(req.files.length != 0){ // 이미지 db, s3에 저장
-				console.log(req.files);
-			// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
-				for(let i = 0 ; i < req.files.length ; i++){
-					pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
-					//s3.upload(req.files[i]);
-				}
-				(async function(){
-					let result = await s3.upload(req.files);
-					console.log(result);
-						callback(null, connection, identify_data);
-				})();
-			} else {
-				res.status(400).send({
-					message : "No Image"
-				});
-				connection.release();
-				callback("No Image");
-				return;
-			}
-		},
+		// s3등록 취소 (camera에서 함)
+		// // 4. s3에 이미지 등록
+		// function(connection, identify_data, callback){
+		// 	console.log(req.files)
+		// 	if(req.files.length != 0){ // 이미지 db, s3에 저장
+		// 		console.log(req.files);
+		// 	// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
+		// 		for(let i = 0 ; i < req.files.length ; i++){
+		// 			pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
+		// 			//s3.upload(req.files[i]);
+		// 		}
+		// 		(async function(){
+		// 			let result = await s3.upload(req.files);
+		// 			console.log(result);
+		// 				callback(null, connection, identify_data);
+		// 		})();
+		// 	} else {
+		// 		res.status(400).send({
+		// 			message : "No Image"
+		// 		});
+		// 		connection.release();
+		// 		callback("No Image");
+		// 		return;
+		// 	}
+		// },
 		// 5. token 값이 옳으면, 상품을 등록한다. 등록 후, 등록 한 상품의 index값을 가져온다.
 		function(connection, identify_data, callback){
 			let insertProductQuery = "INSERT INTO product (pro_cate, pro_name, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx, pro_origin, pro_istimesale, pro_deadline_start, pro_deadline_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -171,8 +173,8 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 		// 7. image는 테이블이 따로 있으므로 3에서 구한 pro_idx값을 이용해서 따로 저장해 준다.
 		function(connection, identify_data, result, callback){
 			let insertProductImageQuery = "INSERT INTO product_image (pro_idx, pro_img) VALUES(?, ?)";
-			for(let i = 0 ; i < pro_image.length ; i++){
-				connection.query(insertProductImageQuery, [result.pro_idx, pro_image[i]], function(err, result){
+			for(let i = 0 ; i < pro_img.length ; i++){
+				connection.query(insertProductImageQuery, [result.pro_idx, pro_img[i]], function(err, result){
 					if(err) {
 						res.status(500).send({
 							message : "Internal Server Error"
@@ -270,7 +272,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					}
 				});
 			},
-			// 3. product image 가져오기
+			// 4. product image 가져오기
 			function(connection, callback){
 				let getProductImageQuery = "SELECT pro_img FROM product_image WHERE pro_idx = ?";		
 
@@ -293,7 +295,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					callback(null, connection);
 				});
 			},
-			// 4. DB에서 image 삭제
+			// 5. DB에서 image 삭제
 			function(connection, callback){
 				let DeletePorductImageQuery = "DELETE FROM product_image WHERE pro_idx = ?";
 
@@ -310,7 +312,7 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 				});
 			},
 
-			// 5. s3에서 이미지 삭제
+			// 6. s3에서 이미지 삭제
 			function(connection, callback){
 				if(pro_image.length == 0){
 				} else{
@@ -319,24 +321,25 @@ router.post('/', upload.array('pro_img'), (req, res) => {
 					callback(null, connection);
 				},
 
-			// 6. s3에 새로운 이미지 등록
-			function(connection, callback){
-				if(req.files){ // 이미지 db, s3에 저장
-					// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
-					for(let i = 0 ; i < req.files.length ; i++){
-						pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
-						s3.upload(req.files[i]);
-					}
-				}
-				callback(null, connection);
-			},
-			// 7. DB에 새로운 이미지를 등록
+				// s3에 이미지 등록 취소(camera에서 함)
+			// // 7. s3에 새로운 이미지 등록
+			// function(connection, callback){
+			// 	if(req.files){ // 이미지 db, s3에 저장
+			// 		// multer-s3를 이용하지 않고, multer로 이미지를 가져오고, s3를 이용해서 s3에 이미지 등록
+			// 		for(let i = 0 ; i < req.files.length ; i++){
+			// 			pro_image[i] = 'https://foodchainimage.s3.ap-northeast-2.amazonaws.com/' + Date.now() + '.' + req.files[i].originalname.split('.').pop();
+			// 			s3.upload(req.files[i]);
+			// 		}
+			// 	}
+			// 	callback(null, connection);
+			// },
+			// 8. DB에 새로운 이미지를 등록
 			function(connection, callback){
 			let insertProductImageQuery = "INSERT INTO product_image (pro_idx, pro_img) VALUES(?, ?)";
 			(async function(){
 				let connections = await pool_async.getConnection();
-				for(let i = 0 ; i < pro_image.length ; i++){
-					let result = connections.query(insertProductImageQuery, [pro_idx, pro_image[i]]);
+				for(let i = 0 ; i < pro_img.length ; i++){
+					let result = connections.query(insertProductImageQuery, [pro_idx, pro_img[i]]);
 					if(!result){
 						res.status(500).send({
 							message : "Internal Server Error"
