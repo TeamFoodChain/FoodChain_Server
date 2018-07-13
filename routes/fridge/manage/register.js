@@ -25,6 +25,8 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
     let registerResult;
     let insertProductImageQuery;
     let insertProductImageResult;
+    let UpdateFriItemQuery;
+    let UpdateFriItemResult;
     let user_idx;
     let fri_item_idx;
 
@@ -116,8 +118,13 @@ router.post('/', upload.array('fri_img'), async (req, res)=>{
                 }
             }
         }else{                         
-            let UpdateFriItemQuery = "UPDATE fridge_item SET fri_cate = ?, fri_name = ?, fri_ex_date = ?, fri_info = ? WHERE fri_item_idx = ?";
-            let UpdateFriItemResult = await db.queryParam_Arr(UpdateFriItemQuery, [fri_cate, fri_name, fri_ex_date, fri_info, fri_item_idx]);
+            if (!fri_info){
+                UpdateFriItemQuery = "UPDATE fridge_item SET fri_cate = ?, fri_name = ?, fri_ex_date = ? WHERE fri_item_idx = ?";
+                UpdateFriItemResult = await db.queryParam_Arr(UpdateFriItemQuery, [fri_cate, fri_name, fri_ex_date, fri_item_idx]);
+            }else{    
+                UpdateFriItemQuery = "UPDATE fridge_item SET fri_cate = ?, fri_name = ?, fri_ex_date = ?, fri_info = ? WHERE fri_item_idx = ?";
+                UpdateFriItemResult = await db.queryParam_Arr(UpdateFriItemQuery, [fri_cate, fri_name, fri_ex_date, fri_info, fri_item_idx]);
+            }
             if(!UpdateFriItemResult){
                 res.status(500).send({
                     message : "Internal Server Error"
