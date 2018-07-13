@@ -72,7 +72,11 @@ router.get('/', (req, res) => {
 					}
 					callback(null, connection, identify_data);
 				} else{
+					res.status(400).send({
+						message : "No Data"
+					});
 					callback("No Data");
+					return;
 				}
 
 			});

@@ -142,7 +142,7 @@ router.delete('/',async (req,res,next)=>{
             }
             if(!deleteResult){
                 res.status(500).send({
-                    message : "Internal server error"
+                    message : "Internal Server Error"
                 })
             }else{
                 res.status(200).send({
