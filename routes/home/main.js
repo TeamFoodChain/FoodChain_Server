@@ -61,7 +61,7 @@ router.get('/', (req, res) =>{
 		// 3. 주변 마켓 정보 검색 쿼리 다시 생각할 것
 		function(connection, identify_data, callback){
 			let getMarketQuery = "SELECT * FROM market WHERE abs(? - mar_locate_lat) <= 0.009 AND abs(? - mar_locate_long) <= 0.0114";
-			if(identify_data.addr_lat == 0 || identify_data.addr_long == 0){
+			if(identify_data.addr_lat == null || identify_data.addr_long == null){
 				let getCurrentProduct = "SELECT pro_idx, pro_cate, pro_name, pro_origin, pro_price, pro_sale_price, pro_ex_date, pro_regist_date, pro_info, mar_idx FROM product ORDER BY pro_regist_date DESC limit 20"; // 최신상품 20개
 				let pro_variable;
 				(async function(){
@@ -85,8 +85,11 @@ router.get('/', (req, res) =>{
 		} else{
 			connection.query(getMarketQuery, [identify_data.addr_lat, identify_data.addr_long], function(err, result){
 				if(result.length == 0){ // 해당 토큰이 없다 
+					res.status(400).send({
+						message : "No Data"
+					});
 					connection.release();
-					callback("Invalied User");
+					callback("No Data");
 					return;
 				}
 
